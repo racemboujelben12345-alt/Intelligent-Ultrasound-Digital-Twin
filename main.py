@@ -235,6 +235,7 @@ def run_pipeline() -> None:
     calibration = calibrate_drift_signal(
         baseline,
         calibration_images,
+        source=source,
     )
 
     drift_config = DriftMonitorConfig(
