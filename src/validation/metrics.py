@@ -106,6 +106,41 @@ class DetectionMetrics:
 
         return self.detection_rate
 
+    @property
+    def precision(self) -> float:
+        """
+        Précision = true positives / predicted positives.
+        """
+
+        denominator = self.true_positive + self.false_positive
+        if denominator == 0:
+            return 0.0
+        return self.true_positive / denominator
+
+    @property
+    def f1_score(self) -> float:
+        """F1-score harmonique entre précision et sensibilité."""
+
+        denominator = self.precision + self.sensitivity
+        if denominator == 0:
+            return 0.0
+        return 2.0 * self.precision * self.sensitivity / denominator
+
+    @property
+    def negative_predictive_value(self) -> float:
+        """Valeur prédictive négative."""
+
+        denominator = self.true_negative + self.false_negative
+        if denominator == 0:
+            return 0.0
+        return self.true_negative / denominator
+
+    @property
+    def balanced_accuracy(self) -> float:
+        """Moyenne de la sensibilité et de la spécificité."""
+
+        return 0.5 * (self.sensitivity + self.specificity)
+
     def to_dict(self) -> dict[str, float | int]:
         """
         Conversion vers une structure sérialisable.
@@ -142,6 +177,10 @@ class DetectionMetrics:
 
             "detection_rate": self.detection_rate,
             "sensitivity": self.sensitivity,
+            "precision": self.precision,
+            "f1_score": self.f1_score,
+            "negative_predictive_value": self.negative_predictive_value,
+            "balanced_accuracy": self.balanced_accuracy,
             "false_positive_rate": (
                 self.false_positive_rate
             ),
