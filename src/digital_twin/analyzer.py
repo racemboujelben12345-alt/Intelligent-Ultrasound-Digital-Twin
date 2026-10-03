@@ -1,0 +1,355 @@
+"""
+SCAN A Digital Twin V2
+======================
+
+Digital Twin Analyzer
+---------------------
+
+Rôle
+----
+Orchestrer l'analyse complète d'une acquisition.
+
+Pipeline
+--------
+Image
+  ↓
+Digital Signature
+  ↓
+Statistical Anomaly Detector
+  ↓
+Digital Twin State
+  ↓
+History
+  ↓
+Temporal Drift
+  ↓
+Temporal Trend
+  ↓
+Explainability
+
+Important
+---------
+Ce module coordonne les composants existants.
+Il ne remplace pas leurs responsabilités.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import numpy as np
+
+from src.anomaly.statistical import (
+    AnomalyDetectionResult,
+    StatisticalAnomalyDetector,
+)
+from src.digital_twin.factory import (
+    build_twin_state_from_detection,
+)
+from src.digital_twin.history import (
+    DigitalTwinHistory,
+)
+from src.digital_twin.state import (
+    DigitalTwinState,
+)
+from src.drift.engine import (
+    DriftAnalysis,
+    DriftEngine,
+)
+from src.explainability.attribution import (
+    Explanation,
+    explain_detection,
+)
+from src.image_analysis.digital_signature import (
+    DigitalSignature,
+    build_digital_signature_from_image,
+)
+from src.prediction.engine import (
+    TemporalPredictionEngine,
+    TemporalPredictionResult,
+)
+from src.signature.baseline import (
+    StatisticalBaseline,
+)
+
+
+@dataclass(frozen=True)
+class TwinAnalysisResult:
+    """
+    Résultat complet d'analyse du Digital Twin.
+
+    Les résultats temporels peuvent être absents lorsque
+    l'historique contient moins de deux observations.
+    """
+
+    signature: DigitalSignature
+
+    detection: AnomalyDetectionResult
+
+    state: DigitalTwinState
+
+    explanation: Explanation
+
+    drift: DriftAnalysis | None
+
+    trend: TemporalPredictionResult | None
+
+    def validate(self) -> None:
+        self.detection.validate()
+        self.state.validate()
+        self.explanation.validate()
+
+        if self.drift is not None:
+            self.drift.validate()
+
+        if self.trend is not None:
+            self.trend.validate()
+
+        if self.state.state != self.detection.state:
+            raise ValueError(
+                "Incohérence entre detection.state et state.state."
+            )
+
+        if not np.isclose(
+            self.state.mahalanobis_squared,
+            self.detection.d2,
+        ):
+            raise ValueError(
+                "Incohérence entre D² et DigitalTwinState."
+            )
+
+        if not np.isclose(
+            self.state.mahalanobis_distance,
+            self.detection.distance,
+        ):
+            raise ValueError(
+                "Incohérence entre D et DigitalTwinState."
+            )
+
+
+class DigitalTwinAnalyzer:
+    """
+    Orchestrateur principal du Digital Twin.
+
+    Responsabilités
+    ---------------
+    - construire une Digital Signature ;
+    - exécuter le détecteur statistique ;
+    - construire le DigitalTwinState ;
+    - enrichir l'historique ;
+    - déclencher l'analyse temporelle ;
+    - produire l'explication.
+
+    Il ne contient pas les algorithmes internes
+    de chaque sous-module.
+    """
+
+    def __init__(
+        self,
+        baseline: StatisticalBaseline,
+        history: DigitalTwinHistory | None = None,
+        drift_engine: DriftEngine | None = None,
+        trend_engine: TemporalPredictionEngine | None = None,
+    ) -> None:
+
+        if not isinstance(
+            baseline,
+            StatisticalBaseline,
+        ):
+            raise TypeError(
+                "baseline doit être une instance de StatisticalBaseline."
+            )
+
+        self.baseline = baseline
+
+        if history is None:
+            history = DigitalTwinHistory()
+
+        self.history = history
+
+        self.detector = StatisticalAnomalyDetector(
+            baseline=baseline
+        )
+
+        self.drift_engine = drift_engine
+
+        self.trend_engine = trend_engine
+
+    def analyze(
+        self,
+        *,
+        image: np.ndarray,
+        acquisition_id: str,
+        source: str = "simulated",
+        timestamp: str | None = None,
+        update_history: bool = True,
+        explain_top_k: int = 5,
+    ) -> TwinAnalysisResult:
+        """
+        Analyse une acquisition complète.
+
+        Parameters
+        ----------
+        image:
+            Image 2D normalisée [0,1].
+
+        acquisition_id:
+            Identifiant unique de l'acquisition.
+
+        source:
+            Provenance logique de l'acquisition.
+
+        timestamp:
+            Timestamp optionnel.
+
+        update_history:
+            Si True, l'état produit est ajouté à l'historique.
+
+        explain_top_k:
+            Nombre maximal de contributions explicatives.
+        """
+
+        if not acquisition_id:
+            raise ValueError(
+                "acquisition_id ne peut pas être vide."
+            )
+
+        if explain_top_k < 1:
+            raise ValueError(
+                "explain_top_k doit être >= 1."
+            )
+
+        # ============================================================
+        # 1. Digital Signature
+        # ============================================================
+
+        signature = build_digital_signature_from_image(
+            image,
+            source=source,
+        )
+
+        vector = signature.to_vector()
+
+        # ============================================================
+        # 2. Anomaly Detection
+        # ============================================================
+
+        detection = self.detector.detect(
+            vector
+        )
+
+        # ============================================================
+        # 3. Digital Twin State
+        # ============================================================
+
+        state = build_twin_state_from_detection(
+            acquisition_id=acquisition_id,
+            source=source,
+            vector=vector,
+            detection=detection,
+            baseline=self.baseline,
+            timestamp=timestamp,
+        )
+
+        # ============================================================
+        # 4. Explainability
+        # ============================================================
+
+        explanation = explain_detection(
+            detection,
+            top_k=explain_top_k,
+        )
+
+        # ============================================================
+        # 5. History update
+        # ============================================================
+
+        if update_history:
+            self.history.add(
+                state
+            )
+
+        # ============================================================
+        # 6. Temporal drift
+        # ============================================================
+
+        drift = None
+
+        if (
+            self.drift_engine is not None
+            and len(self.history) >= 1
+        ):
+            drift = self.drift_engine.analyze_history(
+                self.history
+            )
+
+        # ============================================================
+        # 7. Temporal trend
+        # ============================================================
+
+        trend = None
+
+        if (
+            self.trend_engine is not None
+            and len(self.history) >= 2
+        ):
+            trend = self.trend_engine.analyze_history(
+                self.history
+            )
+
+        # ============================================================
+        # 8. Complete result
+        # ============================================================
+
+        result = TwinAnalysisResult(
+            signature=signature,
+            detection=detection,
+            state=state,
+            explanation=explanation,
+            drift=drift,
+            trend=trend,
+        )
+
+        result.validate()
+
+        return result
+
+    def analyze_many(
+        self,
+        acquisitions: list[
+            tuple[str, np.ndarray]
+        ]
+        | tuple[
+            tuple[str, np.ndarray], ...
+        ],
+        *,
+        source: str = "simulated",
+        update_history: bool = True,
+        explain_top_k: int = 5,
+    ) -> tuple[TwinAnalysisResult, ...]:
+        """
+        Analyse plusieurs acquisitions dans l'ordre fourni.
+        """
+
+        if not acquisitions:
+            raise ValueError(
+                "Au moins une acquisition est requise."
+            )
+
+        results = []
+
+        for acquisition_id, image in acquisitions:
+
+            result = self.analyze(
+                image=image,
+                acquisition_id=acquisition_id,
+                source=source,
+                update_history=update_history,
+                explain_top_k=explain_top_k,
+            )
+
+            results.append(
+                result
+            )
+
+        return tuple(results)
