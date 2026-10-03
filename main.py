@@ -27,7 +27,7 @@ from src.reporting import (
 from src.signature.baseline import StatisticalBaseline
 
 
-PROJECT_NAME = "SCAN A DIGITAL TWIN V2"
+PROJECT_NAME = C.PROJECT_NAME
 
 
 def build_signature_matrix(
@@ -72,7 +72,7 @@ def build_signature_matrix(
 
 def run_pipeline() -> None:
     """
-    Pipeline principal du SCAN A Digital Twin V2.
+    Pipeline principal du SCAN A Digital Twin V3.
 
     Architecture :
 
@@ -131,7 +131,7 @@ def run_pipeline() -> None:
     if len(acquisitions) < minimum_required:
         raise RuntimeError(
             "Nombre insuffisant d'acquisitions pour "
-            "exécuter le pipeline V2."
+            "exécuter le pipeline V3."
         )
 
     source = acquisitions[0].source
@@ -371,7 +371,7 @@ def run_pipeline() -> None:
 
             "source": source,
 
-            "signature_version": "2.0",
+            "signature_version": C.SIGNATURE_VERSION,\n\n            "pipeline_schema_version": C.PIPELINE_SCHEMA_VERSION,\n\n            "project_version": C.PROJECT_VERSION,
 
             "feature_names":
                 list(feature_names),
@@ -415,7 +415,7 @@ def run_pipeline() -> None:
                         calibration.percentiles,
                 },
         },
-        output_dir / "baseline_v2.json",
+        output_dir / "baseline.json",
     )
 
     # ==============================================================
@@ -557,7 +557,7 @@ def run_pipeline() -> None:
 
     save_text(
         "\n".join(report_lines),
-        output_dir / "report_v2.md",
+        output_dir / "report.md",
     )
 
     # ==============================================================
@@ -597,7 +597,7 @@ def run_pipeline() -> None:
     )
 
     print("-" * 70)
-    print("DIGITAL TWIN V2 PIPELINE OK")
+    print("DIGITAL TWIN V3 PIPELINE OK")
     print("=" * 70)
 
 
