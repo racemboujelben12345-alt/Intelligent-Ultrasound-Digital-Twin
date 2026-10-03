@@ -6,3 +6,4 @@ matplotlib
 pillow
 streamlit
 pytest
+opencv-python

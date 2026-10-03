@@ -27,7 +27,7 @@ from src.reporting import (
 from src.signature.baseline import StatisticalBaseline
 
 
-PROJECT_NAME = "SCAN A DIGITAL TWIN V2"
+PROJECT_NAME = C.PROJECT_NAME
 
 
 def build_signature_matrix(
@@ -72,7 +72,7 @@ def build_signature_matrix(
 
 def run_pipeline() -> None:
     """
-    Pipeline principal du SCAN A Digital Twin V2.
+    Pipeline principal du SCAN A Digital Twin V3.
 
     Architecture :
 
@@ -113,25 +113,20 @@ def run_pipeline() -> None:
 
     acquisitions = get_acquisitions(
         prefer_scan_a=True,
-        minimum_scan_a=C.BASELINE_SIZE,
+        minimum_scan_a=C.MIN_BASELINE_ACQUISITIONS,
         demo_size=(
-            C.BASELINE_SIZE
-            + C.HOLDOUT_SIZE
+            C.MIN_TOTAL_ACQUISITIONS
             + 10
         ),
         seed=C.RANDOM_SEED,
     )
 
-    minimum_required = (
-        C.BASELINE_SIZE
-        + C.HOLDOUT_SIZE
-        + 1
-    )
+    minimum_required = C.MIN_TOTAL_ACQUISITIONS
 
     if len(acquisitions) < minimum_required:
         raise RuntimeError(
             "Nombre insuffisant d'acquisitions pour "
-            "exécuter le pipeline V2."
+            "exécuter le pipeline V3."
         )
 
     source = acquisitions[0].source
@@ -240,6 +235,7 @@ def run_pipeline() -> None:
     calibration = calibrate_drift_signal(
         baseline,
         calibration_images,
+        source=source,
     )
 
     drift_config = DriftMonitorConfig(
@@ -360,7 +356,35 @@ def run_pipeline() -> None:
     )
 
     # ==============================================================
-    # 12. EXPORT DE LA BASELINE
+    # 12. EXPORT DES DIGITAL SIGNATURES DE TEST
+    # ==============================================================
+
+    feature_rows = []
+
+    for acquisition_id, image in zip(
+        test_ids,
+        test_images,
+    ):
+        signature = build_digital_signature_from_image(
+            image,
+            source=source,
+        )
+
+        feature_rows.append(
+            {
+                "acquisition_id": acquisition_id,
+                "source": source,
+                **signature.numeric_values(),
+            }
+        )
+
+    save_csv(
+        feature_rows,
+        output_dir / "features.csv",
+    )
+
+    # ==============================================================
+    # 13. EXPORT DE LA BASELINE
     # ==============================================================
 
     baseline_summary = baseline.summary()
@@ -371,7 +395,9 @@ def run_pipeline() -> None:
 
             "source": source,
 
-            "signature_version": "2.0",
+            "signature_version": C.SIGNATURE_VERSION,
+            "pipeline_schema_version": C.PIPELINE_SCHEMA_VERSION,
+            "project_version": C.PROJECT_VERSION,
 
             "feature_names":
                 list(feature_names),
@@ -415,11 +441,11 @@ def run_pipeline() -> None:
                         calibration.percentiles,
                 },
         },
-        output_dir / "baseline_v2.json",
+        output_dir / "baseline.json",
     )
 
     # ==============================================================
-    # 13. RÉSUMÉ GLOBAL
+    # 14. RÉSUMÉ GLOBAL
     # ==============================================================
 
     latest = results[-1]
@@ -445,7 +471,7 @@ def run_pipeline() -> None:
     )
 
     # ==============================================================
-    # 14. RAPPORT MARKDOWN
+    # 15. RAPPORT MARKDOWN
     # ==============================================================
 
     report_lines = [
@@ -557,11 +583,11 @@ def run_pipeline() -> None:
 
     save_text(
         "\n".join(report_lines),
-        output_dir / "report_v2.md",
+        output_dir / "report.md",
     )
 
     # ==============================================================
-    # 15. AFFICHAGE FINAL
+    # 16. AFFICHAGE FINAL
     # ==============================================================
 
     print("-" * 70)
@@ -597,7 +623,7 @@ def run_pipeline() -> None:
     )
 
     print("-" * 70)
-    print("DIGITAL TWIN V2 PIPELINE OK")
+    print("DIGITAL TWIN V3 PIPELINE OK")
     print("=" * 70)
 
 
