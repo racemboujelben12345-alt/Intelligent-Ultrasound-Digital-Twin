@@ -1,5 +1,5 @@
 """
-SCAN A Digital Twin V2
+SCAN A Digital Twin V3
 ======================
 
 Temporal Drift Calibration
@@ -148,6 +148,7 @@ def compute_calibration_d2(
     baseline: StatisticalBaseline,
     images: list[np.ndarray]
     | tuple[np.ndarray, ...],
+    source: str = "simulated",
 ) -> np.ndarray:
     """
     Calcule les D² de Mahalanobis pour une population
@@ -178,7 +179,7 @@ def compute_calibration_d2(
 
         signature = build_digital_signature_from_image(
             image,
-            source="simulated",
+            source=source,
         )
 
         detection = detector.detect(
@@ -259,6 +260,7 @@ def calibrate_drift_signal(
     baseline: StatisticalBaseline,
     images: list[np.ndarray]
     | tuple[np.ndarray, ...],
+    source: str = "simulated",
 ) -> DriftCalibration:
     """
     Construit la calibration temporelle du signal D².
@@ -270,6 +272,7 @@ def calibrate_drift_signal(
     d2_values = compute_calibration_d2(
         baseline=baseline,
         images=images,
+        source=source,
     )
 
     percentiles_array = np.percentile(
