@@ -113,20 +113,15 @@ def run_pipeline() -> None:
 
     acquisitions = get_acquisitions(
         prefer_scan_a=True,
-        minimum_scan_a=C.BASELINE_SIZE,
+        minimum_scan_a=C.MIN_BASELINE_ACQUISITIONS,
         demo_size=(
-            C.BASELINE_SIZE
-            + C.HOLDOUT_SIZE
+            C.MIN_TOTAL_ACQUISITIONS
             + 10
         ),
         seed=C.RANDOM_SEED,
     )
 
-    minimum_required = (
-        C.BASELINE_SIZE
-        + C.HOLDOUT_SIZE
-        + 1
-    )
+    minimum_required = C.MIN_TOTAL_ACQUISITIONS
 
     if len(acquisitions) < minimum_required:
         raise RuntimeError(
@@ -360,7 +355,35 @@ def run_pipeline() -> None:
     )
 
     # ==============================================================
-    # 12. EXPORT DE LA BASELINE
+    # 12. EXPORT DES DIGITAL SIGNATURES DE TEST
+    # ==============================================================
+
+    feature_rows = []
+
+    for acquisition_id, image in zip(
+        test_ids,
+        test_images,
+    ):
+        signature = build_digital_signature_from_image(
+            image,
+            source=source,
+        )
+
+        feature_rows.append(
+            {
+                "acquisition_id": acquisition_id,
+                "source": source,
+                **signature.numeric_values(),
+            }
+        )
+
+    save_csv(
+        feature_rows,
+        output_dir / "features.csv",
+    )
+
+    # ==============================================================
+    # 13. EXPORT DE LA BASELINE
     # ==============================================================
 
     baseline_summary = baseline.summary()
@@ -419,7 +442,7 @@ def run_pipeline() -> None:
     )
 
     # ==============================================================
-    # 13. RÉSUMÉ GLOBAL
+    # 14. RÉSUMÉ GLOBAL
     # ==============================================================
 
     latest = results[-1]
@@ -445,7 +468,7 @@ def run_pipeline() -> None:
     )
 
     # ==============================================================
-    # 14. RAPPORT MARKDOWN
+    # 15. RAPPORT MARKDOWN
     # ==============================================================
 
     report_lines = [
@@ -561,7 +584,7 @@ def run_pipeline() -> None:
     )
 
     # ==============================================================
-    # 15. AFFICHAGE FINAL
+    # 16. AFFICHAGE FINAL
     # ==============================================================
 
     print("-" * 70)
