@@ -22,8 +22,8 @@ def fixed_canny_edge_density(
     return float(np.count_nonzero(edges) / edges.size)
 
 
-def otsu_canny_edge_density(image: np.ndarray) -> float:
-    """Canny with thresholds derived from the image median."""
+def adaptive_median_canny_edge_density(image: np.ndarray) -> float:
+    """Adaptive Canny with thresholds derived from the image median."""
     image_u8 = _to_uint8(image)
     median = float(np.median(image_u8))
     lower = max(0.0, 0.66 * median)
@@ -55,7 +55,7 @@ def compare_edge_definitions(image: np.ndarray) -> dict[str, float]:
     """Return all candidate definitions on the same image."""
     return {
         "edge_density_fixed_canny": fixed_canny_edge_density(image),
-        "edge_density_otsu_canny": otsu_canny_edge_density(image),
+        "edge_density_adaptive_median_canny": adaptive_median_canny_edge_density(image),
         "edge_density_gradient_p90": gradient_percentile_density(
             image, percentile=90.0
         ),
@@ -87,7 +87,7 @@ def _to_uint8(image: np.ndarray) -> np.ndarray:
 
 __all__ = [
     "fixed_canny_edge_density",
-    "otsu_canny_edge_density",
+    "adaptive_median_canny_edge_density",
     "gradient_percentile_density",
     "compare_edge_definitions",
 ]
