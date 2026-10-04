@@ -15,7 +15,7 @@ Every acquisition entering the Digital Twin pipeline has declared provenance.
 | gain | optional | gain |
 | depth | optional | imaging depth |
 | focus | optional | focus |
-| image_format | PNG/DICOM/etc. | representation |
+| image_format | PNG/JPEG/TIFF (DICOM requires a dedicated adapter) | representation |
 | preprocessing_version | vX.Y | preprocessing version |
 | feature_version | vX.Y | feature version |
 
