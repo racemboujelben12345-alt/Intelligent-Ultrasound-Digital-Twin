@@ -564,7 +564,8 @@ def load_acquisitions(
 
     Priorité :
         1. acquisition expérimentale réelle si suffisamment d'acquisitions existent ;
-        2. données simulées de démonstration sinon.
+        2. données publiques de référence si suffisamment d'images existent ;
+        3. données simulées de démonstration sinon.
 
     Le fallback simulé est explicitement marqué SIMULATED.
     """
@@ -595,6 +596,8 @@ def get_acquisitions(
     *,
     prefer_experimental: bool = True,
     minimum_experimental: int = 30,
+    prefer_public: bool = True,
+    minimum_public: int = 30,
     prefer_scan_a: bool | None = None,
     minimum_scan_a: int | None = None,
     demo_size: int = 50,
