@@ -1,4 +1,4 @@
-"""SCAN A Digital Twin — Engineering Monitoring Workstation.
+"""Intelligent Ultrasound Digital Twin — Engineering Monitoring Workstation.
 
 Presentation layer only. The scientific pipeline and artifacts remain unchanged.
 """
@@ -26,7 +26,7 @@ OUT = ROOT / "outputs"
 # ============================================================
 
 st.set_page_config(
-    page_title="SCAN A | Engineering Workstation",
+    page_title="Ultrasound | Engineering Workstation",
     page_icon="◈",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -467,7 +467,7 @@ source_label = (
 with st.sidebar:
 
     st.markdown(
-        '<div class="eyebrow">SCAN A / DIGITAL TWIN</div>',
+        '<div class="eyebrow">ultrasound system / DIGITAL TWIN</div>',
         unsafe_allow_html=True,
     )
 
@@ -501,7 +501,7 @@ with st.sidebar:
     st.markdown("Software pipeline · **COMPLETE**")
     st.markdown("Simulation · **COMPLETE**")
     st.markdown("Public benchmark · **COMPLETE**")
-    st.markdown("Real SCAN A · **PENDING**")
+    st.markdown("Real ultrasound · **PENDING**")
     st.markdown("Physical baseline · **PENDING**")
 
     st.divider()
@@ -526,7 +526,7 @@ st.markdown(
     '<div class="appbar">'
     '<div>'
     '<div class="appbar-title">'
-    'SCAN A · INTELLIGENT ULTRASOUND DIGITAL TWIN'
+    'ultrasound system · INTELLIGENT ULTRASOUND DIGITAL TWIN'
     '</div>'
     '<div class="appbar-sub">'
     'Biomedical Engineering · Condition Monitoring'
@@ -561,7 +561,7 @@ if source_label == "SIMULATION":
         '<div class="banner">'
         '<b>SIMULATION MODE</b> · '
         'Synthetic observations validate the software workflow only. '
-        'They do not establish a physical SCAN A fault, threshold, '
+        'They do not establish a physical ultrasound system fault, threshold, '
         'or hardware-health percentage.'
         '</div>',
         unsafe_allow_html=True,
@@ -760,7 +760,7 @@ with tabs[0]:
             '<div class="small">'
             'Observed trajectory from generated twin states. '
             'No physical acceptance threshold is displayed '
-            'unless established from real SCAN A validation.'
+            'unless established from real ultrasound validation.'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -778,7 +778,7 @@ with tabs[0]:
             f'by the existing multivariate pipeline as '
             f'<b>{state}</b>. The statistical distance and drift '
             f'outputs must be interpreted against a validated '
-            f'SCAN A baseline.'
+            f'ultrasound baseline.'
             f'</p>'
             f'<div class="trace">'
             f'SOURCE  {source_label}<br>'
@@ -799,7 +799,7 @@ with tabs[0]:
             'Public and synthetic ultrasound data support '
             'methodological and software validation. '
             'They must not silently define the physical '
-            'SCAN A Digital Signature, hardware thresholds, '
+            'Ultrasound Digital Signature, hardware thresholds, '
             'or a diagnosis.'
             '</p>'
             '</div>',
@@ -1318,7 +1318,7 @@ with tabs[4]:
             'signature. Persistence and direction are useful '
             'for engineering review, but the current synthetic '
             'workflow cannot be interpreted as proof of a '
-            'physical SCAN A drift.'
+            'physical ultrasound-system drift.'
             '</p>'
             '<p class="muted">'
             '<b>'
@@ -1361,19 +1361,19 @@ with tabs[5]:
             "Methodological/software validation only.",
         ),
         (
-            "Real SCAN A acquisition",
+            "Real ultrasound acquisition",
             "PENDING",
             "Repeated controlled acquisitions from the physical system.",
         ),
         (
-            "SCAN A Digital Signature",
+            "Ultrasound Digital Signature",
             "PENDING",
             "Requires real-system characterization and repeatability.",
         ),
         (
             "Physical baseline / thresholds",
             "PENDING",
-            "Must be established from validated real SCAN A observations.",
+            "Must be established from validated real ultrasound observations.",
         ),
         (
             "Controlled perturbation study",
@@ -1413,7 +1413,7 @@ with tabs[5]:
         f'</div>'
         '<p class="muted">'
         'Synthetic and public datasets are explicitly separated '
-        'from the future physical SCAN A baseline. This prevents '
+        'from the future physical ultrasound baseline. This prevents '
         'benchmark behavior from being presented as machine-specific '
         'evidence.'
         '</p>'
@@ -1457,7 +1457,7 @@ with tabs[6]:
 st.divider()
 
 st.caption(
-    "SCAN A Digital Twin · Presentation layer only · "
-    "Real SCAN A characterization remains pending. "
+    "Intelligent Ultrasound Digital Twin · Presentation layer only · "
+    "Real ultrasound characterization remains pending. "
     "Not clinical diagnosis, not automatic proof of hardware failure, not RUL."
 )
