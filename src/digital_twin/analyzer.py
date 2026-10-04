@@ -43,6 +43,7 @@ from src.ai.intelligence import (
     AIAnomalyAssessment,
     UltrasoundAIEngine,
 )
+from src.ai.fusion import IntelligenceFusion, fuse_intelligence
 from src.anomaly.statistical import (
     AnomalyDetectionResult,
     StatisticalAnomalyDetector,
@@ -105,6 +106,7 @@ class TwinAnalysisResult:
     health: TwinHealthAssessment
 
     ai: AIAnomalyAssessment
+    fusion: IntelligenceFusion
     ai_feature_contributions: tuple[tuple[str, float], ...]
 
     def validate(self) -> None:
@@ -112,6 +114,7 @@ class TwinAnalysisResult:
         self.state.validate()
         self.health.validate()
         self.ai.validate()
+        self.fusion.validate()
         for name, value in self.ai_feature_contributions:
             if not name or not np.isfinite(value) or value < 0.0:
                 raise ValueError("Invalid AI feature contribution.")
@@ -288,6 +291,12 @@ class DigitalTwinAnalyzer:
         ai_feature_contributions = tuple(
             self.ai_engine.anomaly_feature_contributions(vector)[:explain_top_k]
         )
+        fusion = fuse_intelligence(
+            mahalanobis_squared=detection.d2,
+            critical_threshold=self.baseline.thresholds["critical"],
+            quality_score=state.quality_score,
+            ai=ai,
+        )
 
         # ============================================================
         # 5. Twin Health + Evidence Confidence
@@ -372,6 +381,7 @@ class DigitalTwinAnalyzer:
             trend=trend,
             health=health,
             ai=ai,
+            fusion=fusion,
             ai_feature_contributions=ai_feature_contributions,
         )
 
