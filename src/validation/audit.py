@@ -139,3 +139,40 @@ def verify_severity_response(
         )
     except Exception as exc:
         return AuditCheck("severity_sensitivity", False, str(exc))
+
+
+def verify_no_parent_leakage(
+    acquisitions: Iterable[Acquisition],
+    train_ids: set[str],
+    holdout_ids: set[str],
+) -> AuditCheck:
+    """Detect parent/derived-family overlap between train and holdout.
+
+    A synthetic derivative belongs to the same information family as its
+    parent. Therefore splitting only by image ID can leak information.
+    """
+    try:
+        items = tuple(acquisitions)
+
+        def root_id(item: Acquisition) -> str:
+            return item.parent_acquisition_id or item.id
+
+        train_roots = {
+            root_id(item) for item in items if item.id in train_ids
+        }
+        holdout_roots = {
+            root_id(item) for item in items if item.id in holdout_ids
+        }
+
+        overlap = train_roots & holdout_roots
+        passed = not overlap
+
+        return AuditCheck(
+            "parent_group_leakage",
+            passed,
+            "No parent-family overlap detected."
+            if passed
+            else f"Leakage detected in parent families: {sorted(overlap)}",
+        )
+    except Exception as exc:
+        return AuditCheck("parent_group_leakage", False, str(exc))
