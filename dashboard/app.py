@@ -24,49 +24,54 @@ st.markdown(
     """
 <style>
 :root{
-  --bg:#f4f7fa; --surface:#ffffff; --surface2:#eef4f8; --line:#d7e1e8;
-  --text:#172433; --muted:#66798a; --blue:#1769AA; --teal:#087f83;
-  --warn:#b77b12; --danger:#bd3f4b; --info:#2d6fb7; --shadow:0 2px 10px rgba(23,36,51,.06);
+  --bg:#e7edf1; --surface:#fbfcfd; --surface2:#eef3f6; --line:#c7d3dc;
+  --text:#1b2b39; --muted:#607484; --navy:#18344b; --blue:#1769aa; --teal:#087f83;
+  --warn:#a86d09; --danger:#b33b47; --shadow:0 1px 4px rgba(25,45,60,.08);
 }
 .stApp{background:var(--bg);color:var(--text)}
-[data-testid="stHeader"]{background:rgba(244,247,250,.96)}
-.block-container{max-width:1600px;padding:1.2rem 2rem 3rem}
-section[data-testid="stSidebar"]{background:#ffffff;border-right:1px solid var(--line)}
-section[data-testid="stSidebar"] .block-container{padding-top:1.2rem}
+[data-testid="stHeader"]{background:rgba(231,237,241,.94)}
+.block-container{max-width:1640px;padding:0 2rem 3rem}
+section[data-testid="stSidebar"]{background:#f4f7f9;border-right:1px solid var(--line)}
+section[data-testid="stSidebar"] .block-container{padding-top:1rem}
 h1,h2,h3,h4{color:var(--text)}
 .small,.muted{color:var(--muted)}
-.eyebrow{color:var(--blue);font-size:.65rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
-.hero{background:#fff;border:1px solid var(--line);border-left:5px solid var(--blue);
-      border-radius:12px;padding:22px 26px;margin-bottom:12px;box-shadow:var(--shadow)}
-.hero h1{margin:.25rem 0 .35rem;font-size:2rem;letter-spacing:-.025em}
-.hero p{margin:0;color:var(--muted);font-size:.9rem}
-.banner{border:1px solid #e5cf9a;background:#fff9ea;border-radius:9px;padding:10px 13px;color:#77570d}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow)}
-.metric-label{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
-.metric-value{font-size:1.5rem;font-weight:800;line-height:1.2;margin-top:7px;color:var(--text)}
-.metric-note{font-size:.67rem;color:var(--muted);margin-top:5px}
-.section{margin:21px 0 9px 1px;color:#496579;font-size:.66rem;font-weight:800;
-         letter-spacing:.14em;text-transform:uppercase}
-.state-card{background:#f8fbfd;border:1px solid #bfd4e1;border-left:4px solid var(--teal);
-            border-radius:10px;padding:17px 19px;box-shadow:var(--shadow)}
-.state{font-size:1.75rem;font-weight:900;letter-spacing:.01em;margin:.15rem 0}
-.badge{display:inline-block;border-radius:999px;padding:4px 9px;font-size:.6rem;font-weight:850;letter-spacing:.08em}
-.ok{color:#176b55;background:#e8f6f0;border:1px solid #abd9c8}
-.watch{color:#8a5d09;background:#fff3d6;border:1px solid #ead08c}
-.alert{color:#9c303b;background:#fdebed;border:1px solid #e5b1b8}
-.neutral{color:#526b7c;background:#edf2f5;border:1px solid #ccd8df}
-.pipeline{display:flex;align-items:center;gap:7px;flex-wrap:wrap;background:#fff;
-          border:1px solid var(--line);border-radius:10px;padding:13px;box-shadow:var(--shadow)}
-.node{padding:7px 10px;background:#f1f6f9;border:1px solid #ccdce5;border-radius:6px;
-      font-size:.68rem;color:#29465b;font-weight:650}
-.arrow{color:#8aa0af}
-.trace{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.72rem;color:#526b7c}
-div[data-testid="stMetric"]{background:#fff;border:1px solid var(--line);padding:9px 12px;border-radius:9px;box-shadow:var(--shadow)}
-.stTabs [data-baseweb="tab-list"]{gap:3px;background:#e9f0f4;padding:4px;border-radius:8px}
-.stTabs [data-baseweb="tab"]{color:#607687;font-size:.74rem}
-.stTabs [aria-selected="true"]{color:var(--blue);font-weight:750}
+.eyebrow{color:var(--blue);font-size:.62rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase}
+.appbar{background:var(--navy);color:#f4f8fa;margin:0 -2rem 18px;padding:13px 2rem;
+ display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--blue)}
+.appbar-title{font-size:.88rem;font-weight:800;letter-spacing:.08em}
+.appbar-sub{font-size:.66rem;color:#b9c9d4;margin-top:3px}
+.appbar-status{font-size:.63rem;font-weight:850;letter-spacing:.1em;padding:6px 10px;border:1px solid #718b9d;border-radius:4px}
+.hero{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--blue);
+ border-radius:5px;padding:17px 21px;margin-bottom:10px;box-shadow:var(--shadow)}
+.hero h1{margin:.18rem 0 .25rem;font-size:1.72rem;letter-spacing:-.018em}
+.hero p{margin:0;color:var(--muted);font-size:.82rem}
+.banner{border:1px solid #dfc98f;background:#fff8e5;border-radius:4px;padding:9px 12px;color:#73530a;font-size:.78rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:12px 14px;box-shadow:var(--shadow)}
+.metric-label{font-size:.59rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.metric-value{font-size:1.35rem;font-weight:800;line-height:1.15;margin-top:6px;color:var(--text)}
+.metric-note{font-size:.64rem;color:var(--muted);margin-top:4px}
+.section{margin:18px 0 7px 1px;color:#405b6e;font-size:.62rem;font-weight:850;
+ letter-spacing:.16em;text-transform:uppercase;border-bottom:1px solid #cbd6de;padding-bottom:5px}
+.state-card{background:#f9fbfc;border:1px solid #b8ccd8;border-left:4px solid var(--teal);
+ border-radius:5px;padding:14px 17px;box-shadow:var(--shadow)}
+.state{font-size:1.62rem;font-weight:900;letter-spacing:.01em;margin:.12rem 0}
+.badge{display:inline-block;border-radius:3px;padding:3px 7px;font-size:.57rem;font-weight:850;letter-spacing:.08em}
+.ok{color:#17634f;background:#e6f3ee;border:1px solid #a8d2c2}
+.watch{color:#80590a;background:#fff1d0;border:1px solid #e4ca82}
+.alert{color:#96313c;background:#fbe9eb;border:1px solid #dfadb4}
+.neutral{color:#4f6675;background:#edf2f5;border:1px solid #c9d5dd}
+.pipeline{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#f8fafb;
+ border:1px solid var(--line);border-radius:4px;padding:10px}
+.node{padding:6px 9px;background:#edf3f6;border:1px solid #c9d7df;border-radius:3px;
+ font-size:.64rem;color:#29465b;font-weight:700}
+.arrow{color:#7f95a4}
+.trace{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.68rem;color:#526b7c}
+div[data-testid="stMetric"]{background:var(--surface);border:1px solid var(--line);padding:8px 11px;border-radius:4px;box-shadow:none}
+.stTabs [data-baseweb="tab-list"]{gap:0;background:#dbe4ea;padding:3px;border:1px solid #c4d0d8;border-radius:4px}
+.stTabs [data-baseweb="tab"]{color:#526b7c;font-size:.7rem;border-radius:3px}
+.stTabs [aria-selected="true"]{color:var(--blue);font-weight:800;background:#f9fbfc}
 hr{border-color:var(--line)}
-[data-testid="stDataFrame"]{border:1px solid var(--line);border-radius:8px}
+[data-testid="stDataFrame"]{border:1px solid var(--line);border-radius:4px}
 </style>
 """,
     unsafe_allow_html=True,
@@ -164,10 +169,14 @@ with st.sidebar:
     st.caption("Presentation layer does not modify the scientific engine.")
 
 st.markdown(
+    '<div class="appbar">'
+    '<div><div class="appbar-title">SCAN A · INTELLIGENT ULTRASOUND DIGITAL TWIN</div>'
+    '<div class="appbar-sub">BIOMEDICAL ENGINEERING CONDITION-MONITORING WORKSTATION</div></div>'
+    f'<div class="appbar-status">{source_label} · {state}</div></div>'
     '<div class="hero">'
-    '<div class="eyebrow">ENGINEERING MONITORING WORKSTATION · V5.1</div>'
-    '<h1>SCAN A — Intelligent Ultrasound Digital Twin</h1>'
-    '<p>Condition assessment · Digital Signature · Statistical monitoring · Drift surveillance · Validation maturity</p>'
+    '<div class="eyebrow">SYSTEM OVERVIEW</div>'
+    '<h1>Engineering condition assessment</h1>'
+    '<p>Digital Signature · Multivariate monitoring · Drift surveillance · Validation maturity</p>'
     '</div>',
     unsafe_allow_html=True,
 )
@@ -180,7 +189,7 @@ if source_label == "SIMULATION":
         unsafe_allow_html=True,
     )
 
-st.markdown('<div class="section">System state</div>', unsafe_allow_html=True)
+st.markdown('<div class="section">System state · acquisition context</div>', unsafe_allow_html=True)
 cols = st.columns([1.45, 1, 1, 1, 1, 1])
 cols[0].markdown(
     f'<div class="state-card"><div class="eyebrow">DIGITAL TWIN STATE</div>'
@@ -427,6 +436,6 @@ with tabs[6]:
 
 st.divider()
 st.caption(
-    "SCAN A Digital Twin V5.1 · Presentation layer only · Engineering monitoring workstation · "
+    "SCAN A Digital Twin · Presentation layer only · Real SCAN A characterization remains pending. "
     "Not clinical diagnosis, not automatic proof of hardware failure, not RUL."
 )
