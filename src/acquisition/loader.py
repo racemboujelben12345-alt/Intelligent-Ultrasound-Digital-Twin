@@ -494,8 +494,10 @@ def build_controlled_degradation(
 
 def load_acquisitions(
     *,
-    prefer_scan_a: bool = True,
-    minimum_scan_a: int = 30,
+    prefer_experimental: bool = True,
+    minimum_experimental: int = 30,
+    prefer_scan_a: bool | None = None,
+    minimum_scan_a: int | None = None,
     demo_size: int = 50,
     seed: int = 42,
 ) -> tuple[Acquisition, ...]:
@@ -509,10 +511,15 @@ def load_acquisitions(
     Le fallback simulé est explicitement marqué SIMULATED.
     """
 
-    if prefer_scan_a:
+    if prefer_scan_a is not None:
+        prefer_experimental = prefer_scan_a
+    if minimum_scan_a is not None:
+        minimum_experimental = minimum_scan_a
+
+    if prefer_experimental:
         experimental = load_experimental_acquisitions()
 
-        if len(experimental) >= minimum_scan_a:
+        if len(experimental) >= minimum_experimental:
             return experimental
 
     return generate_demo_acquisitions(
@@ -523,8 +530,10 @@ def load_acquisitions(
 
 def get_acquisitions(
     *,
-    prefer_scan_a: bool = True,
-    minimum_scan_a: int = 30,
+    prefer_experimental: bool = True,
+    minimum_experimental: int = 30,
+    prefer_scan_a: bool | None = None,
+    minimum_scan_a: int | None = None,
     demo_size: int = 50,
     seed: int = 42,
 ) -> tuple[Acquisition, ...]:
@@ -533,6 +542,8 @@ def get_acquisitions(
     """
 
     return load_acquisitions(
+        prefer_experimental=prefer_experimental,
+        minimum_experimental=minimum_experimental,
         prefer_scan_a=prefer_scan_a,
         minimum_scan_a=minimum_scan_a,
         demo_size=demo_size,
