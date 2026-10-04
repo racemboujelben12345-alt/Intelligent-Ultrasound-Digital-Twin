@@ -13,8 +13,10 @@ Build a traceable computational representation of the observable imaging behavio
 7. Digital Twin State — represent the current observed state.
 8. Drift Monitoring — detect persistent temporal change.
 9. Simulation — inject controlled observable degradations.
-10. Prediction/Trend — quantify temporal direction without claiming physical RUL.
-11. Validation — compare outputs with explicit ground truth.
+10. AI Intelligence — ensemble anomaly evidence, validated-state classification and predictive uncertainty.
+11. Intelligence Fusion — combine statistical deviation, AI evidence and quality with explicit weights and disagreement penalty.
+12. Drift/Prediction — quantify temporal direction without claiming physical RUL.
+13. Validation — compare outputs with explicit ground truth.
 12. Reporting/Dashboard — present results without changing analytical decisions.
 
 ## Why this is a Digital Twin prototype
@@ -47,3 +49,41 @@ Never claim physical-fault detection unless the ground truth represents that phy
 
 ## Future extensions
 Metadata conditioning, ROI-aware ultrasound features, A-scan signal support, multivariate control charts, calibrated uncertainty, domain-shift monitoring, fault-scenario library, experiment tracking and model/version registry.
+
+
+## AI intelligence contract
+
+The AI layer is a first-class engineering component, not a decorative classifier.
+
+### Unsupervised
+An Isolation Forest ensemble operates on the canonical Digital Signature and
+reports anomaly evidence, ensemble agreement and confidence.
+
+### Supervised
+A Random Forest classifier is available only when validated engineering labels
+or controlled simulation classes exist.
+
+### Predictive
+A Random Forest regression ensemble estimates a validated temporal engineering
+target and exposes an empirical P05/P95 interval.
+
+### Explainability and governance
+AI feature sensitivity is estimated by leave-one-feature-out perturbation.
+Each fitted task has a model card with version, feature contract, source,
+hyperparameters, seeds and timestamp. Inference records can hash the input
+signature for auditability.
+
+### Evidence fusion
+Statistical Mahalanobis evidence, AI anomaly evidence and image-quality evidence
+are fused transparently. Disagreement between statistical and AI signals reduces
+confidence. The fused score is an engineering evidence index and is not a
+physical-failure probability.
+
+## End-to-end contract
+
+`Acquisition → Provenance → Image Analysis → Digital Signature → Quality →
+Statistical Baseline → AI Ensemble → Evidence Fusion → Twin State →
+History/Drift → Prediction → Simulation → V&V → Reporting`
+
+No downstream dashboard component is allowed to silently redefine the analytical
+state. Analytical decisions remain in `src/`; the dashboard is presentation.
