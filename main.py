@@ -455,7 +455,8 @@ def run_pipeline() -> None:
         n_acquisitions=len(acquisitions),
         source=source,
         baseline_size=len(training_images),
-        holdout_size=len(calibration_images),
+        calibration_size=len(calibration_images),
+        test_size=len(test_images),
         latest_state=latest.state.state,
         latest_distance=(
             latest.state.mahalanobis_distance
