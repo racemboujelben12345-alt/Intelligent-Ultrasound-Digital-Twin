@@ -105,12 +105,16 @@ class TwinAnalysisResult:
     health: TwinHealthAssessment
 
     ai: AIAnomalyAssessment
+    ai_feature_contributions: tuple[tuple[str, float], ...]
 
     def validate(self) -> None:
         self.detection.validate()
         self.state.validate()
         self.health.validate()
         self.ai.validate()
+        for name, value in self.ai_feature_contributions:
+            if not name or not np.isfinite(value) or value < 0.0:
+                raise ValueError("Invalid AI feature contribution.")
         self.explanation.validate()
 
         if self.drift is not None:
@@ -281,6 +285,9 @@ class DigitalTwinAnalyzer:
         # ============================================================
 
         ai = self.ai_engine.assess(vector)
+        ai_feature_contributions = tuple(
+            self.ai_engine.anomaly_feature_contributions(vector)[:explain_top_k]
+        )
 
         # ============================================================
         # 5. Twin Health + Evidence Confidence
@@ -365,6 +372,7 @@ class DigitalTwinAnalyzer:
             trend=trend,
             health=health,
             ai=ai,
+            ai_feature_contributions=ai_feature_contributions,
         )
 
         result.validate()
