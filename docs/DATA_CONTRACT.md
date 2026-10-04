@@ -24,3 +24,30 @@ Public data remain labelled public. Simulated data retain parent ID, degradation
 
 ## Scientific purpose
 This contract prevents leakage and invalid claims when public, synthetic and experimental data coexist.
+
+
+## 6. Simulation lineage
+
+Every controlled synthetic derivative must retain:
+
+- `parent_acquisition_id`: identifier of the source acquisition;
+- `simulation_scenario`: degradation family;
+- `simulation_severity`: normalized severity in `[0,1]`;
+- `simulation_seed`: reproducibility seed;
+- `simulation_version`: version of the degradation engine.
+
+The exception is a synthetic root/demo acquisition, which uses the explicit lineage marker
+`synthetic_root`. This is not presented as experimental evidence.
+
+## 7. Source separation
+
+The canonical source categories are:
+
+| Category | Meaning | Permitted for device-specific claims? |
+|---|---|---|
+| `experimental` | Real ultrasound acquisition | Yes, subject to protocol and validation |
+| `public` | Public reference dataset | No, not by itself |
+| `simulated` | Controlled digital perturbation | No, used for sensitivity/robustness experiments |
+| `scan_a` | Legacy compatibility label | Treated as experimental only when backed by real acquisition metadata |
+
+Metrics must remain source-aware. Public, simulated and experimental results must never be silently pooled into one validation score.
