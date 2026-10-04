@@ -538,9 +538,9 @@ with st.sidebar:
     st.caption("Current artifacts")
 
     st.markdown("**VALIDATION MATURITY**")
-    st.markdown("Software pipeline · **COMPLETE**")
-    st.markdown("Simulation · **COMPLETE**")
-    st.markdown("Public benchmark · **COMPLETE**")
+    st.markdown("Software pipeline · **IMPLEMENTED**")
+    st.markdown("Simulation · **IMPLEMENTED**")
+    st.markdown("Public benchmark · **IMPLEMENTED / DATA-DEPENDENT**")
     st.markdown("Real ultrasound · **PENDING**")
     st.markdown("Physical baseline · **PENDING**")
 
@@ -549,8 +549,8 @@ with st.sidebar:
     st.markdown("**PIPELINE**")
 
     st.caption(
-        "Acquisition → Signature → Baseline → Detection → "
-        "Twin State → Drift → Trend"
+        "Acquisition → Signature → Quality → Baseline → AI → Fusion → "
+        "Twin State → Drift → Prediction → V&V"
     )
 
     st.caption(
