@@ -11,7 +11,7 @@ import math
 
 import pandas as pd
 import streamlit as st
-
+\nfrom src.digital_twin.health import assess_twin_health\n
 
 # ============================================================
 # PATHS
@@ -461,6 +461,46 @@ source_label = (
 
 
 # ============================================================
+# DIGITAL TWIN HEALTH & EVIDENCE CONFIDENCE
+# ============================================================
+
+try:
+    _quality = float(get_value("quality_score", 0.0))
+    _distance = float(get_value("mahalanobis_distance", 0.0))
+except (TypeError, ValueError):
+    _quality = 0.0
+    _distance = 0.0
+
+_feature_columns = [
+    name for name in features.columns
+    if name not in {"acquisition_id", "acquisition_index", "source"}
+    and pd.api.types.is_numeric_dtype(features[name])
+]
+_expected_features = max(len(_feature_columns), 1)
+
+if source in {"EXPERIMENTAL", "SCAN_A"}:
+    _provenance_score = 100.0
+elif source == "PUBLIC":
+    _provenance_score = 80.0
+else:
+    _provenance_score = 60.0
+
+_health = assess_twin_health(
+    quality_score=_quality,
+    mahalanobis_distance=max(_distance, 0.0),
+    baseline_observations=baseline_size,
+    feature_count=len(_feature_columns),
+    expected_feature_count=_expected_features,
+    provenance_score=_provenance_score,
+)
+
+health_state_cls = (
+    "ok" if _health.health_state == "NOMINAL"
+    else "alert" if _health.health_state == "HIGH_DEVIATION"
+    else "watch"
+)
+
+# ============================================================
 # SIDEBAR
 # ============================================================
 
@@ -661,6 +701,51 @@ d.metric(
     ),
 )
 
+
+# ============================================================
+# TWIN HEALTH PANEL
+# ============================================================
+
+st.markdown(
+    '<div class="section">Twin health · evidence confidence</div>',
+    unsafe_allow_html=True,
+)
+
+h1, h2, h3, h4 = st.columns(4)
+
+h1.metric(
+    "Twin Health Index",
+    f"{_health.health_index:.1f}/100",
+    help="Engineering condition indicator; not a hardware-health percentage.",
+)
+h2.metric(
+    "Evidence Confidence",
+    f"{_health.confidence_score:.1f}/100",
+    help="Evidence maturity score; not a probability of correctness or failure.",
+)
+h3.metric(
+    "Quality Component",
+    f"{_health.quality_component:.1f}/100",
+)
+h4.metric(
+    "Statistical Component",
+    f"{_health.anomaly_component:.1f}/100",
+)
+
+st.markdown(
+    f'<div class="state-card">'
+    f'<div class="eyebrow">TWIN HEALTH STATE</div>'
+    f'<div class="state">{_health.health_state}</div>'
+    f'<span class="badge {health_state_cls}">{_health.health_state}</span>'
+    f'<div class="small" style="margin-top:8px">'
+    f'Dominant evidence · {", ".join(_health.dominant_evidence)}'
+    f'</div>'
+    f'<div class="small" style="margin-top:5px">'
+    f'{_health.interpretation}'
+    f'</div>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 # ============================================================
 # DIGITAL TWIN CHAIN
