@@ -10,28 +10,42 @@ def _reference(seed=7):
 
 def test_unsupervised_ensemble_is_bounded_and_deterministic():
     X = _reference()
-    engine = UltrasoundAIEngine(random_seeds=(11, 23, 37))
-    engine.fit_reference(X)
+    engine = UltrasoundAIEngine(n_models=3, random_seeds=(11, 23, 37))
+    engine.fit_reference(X, training_source="test_reference")
 
-    x = X[0]
-    a = engine.assess(x)
-    b = engine.assess(x)
+    a = engine.assess(X[0])
+    b = engine.assess(X[0])
 
     assert 0.0 <= a.anomaly_score <= 1.0
     assert 0.0 <= a.anomaly_probability <= 1.0
     assert 0.0 <= a.confidence <= 1.0
     assert 0.0 <= a.ensemble_agreement <= 1.0
     assert a == b
+    assert engine.model_cards["unsupervised_anomaly"].training_source == "test_reference"
 
 
-def test_supervised_mode_returns_class_probability_and_importance():
+def test_ai_feature_sensitivity_is_ranked_and_bounded():
+    X = _reference()
+    engine = UltrasoundAIEngine(n_models=3, random_seeds=(11, 23, 37))
+    engine.fit_reference(X)
+
+    x = X[0].copy()
+    x[3] += 5.0
+    contributions = engine.anomaly_feature_contributions(x)
+
+    assert len(contributions) == X.shape[1]
+    assert all(value >= 0.0 for _, value in contributions)
+    assert all(np.isfinite(value) for _, value in contributions)
+
+
+def test_supervised_and_predictive_paths_have_independent_scalers():
     X = _reference()
     y = np.array(["nominal"] * 40 + ["degraded"] * 40)
     X[40:] += 2.0
 
-    engine = UltrasoundAIEngine(random_seeds=(11, 23, 37))
+    engine = UltrasoundAIEngine(n_models=3, random_seeds=(11, 23, 37))
+    engine.fit_reference(X)
     engine.fit_supervised(X, y)
-
     result = engine.predict_class(X[-1])
 
     assert result["class"] in {"nominal", "degraded"}
@@ -39,14 +53,26 @@ def test_supervised_mode_returns_class_probability_and_importance():
     assert abs(sum(result["probabilities"].values()) - 1.0) < 1e-9
     assert len(result["feature_importance"]) == X.shape[1]
 
+    target = X[:, 0] * 2.0 - X[:, 1]
+    engine.fit_predictive_ensemble(X, target)
+    prediction = engine.predict_with_uncertainty(X[0])
+    assert prediction.lower <= prediction.prediction <= prediction.upper
 
-def test_predictive_ensemble_exposes_uncertainty():
+
+def test_inference_record_is_traceable():
     X = _reference()
-    y = X[:, 0] * 2.0 - X[:, 1] + 0.1 * X[:, 2]
+    engine = UltrasoundAIEngine(n_models=3, random_seeds=(11, 23, 37))
+    engine.fit_reference(X, training_source="synthetic_vv")
+    assessment = engine.assess(X[0])
 
-    engine = UltrasoundAIEngine(random_seeds=(11, 23, 37))
-    engine.fit_predictive_ensemble(X, y)
-    result = engine.predict_with_uncertainty(X[0])
+    record = engine.build_inference_record(
+        acquisition_id="ACQ-001",
+        source="simulated",
+        x=X[0],
+        assessment=assessment,
+    )
 
-    assert result.lower <= result.prediction <= result.upper
-    assert 0.0 <= result.confidence <= 1.0
+    assert record.acquisition_id == "ACQ-001"
+    assert record.task == "unsupervised_anomaly"
+    assert len(record.input_hash) == 64
+    assert 0.0 <= record.confidence <= 1.0
