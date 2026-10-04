@@ -39,6 +39,7 @@ from config import (
     DEMO_DATA_DIR,
     SCAN_A_DIR,
 )
+from src.acquisition.metadata import load_metadata
 from src.acquisition.models import Acquisition
 from src.acquisition.provenance import (
     DataProvenance,
@@ -309,6 +310,7 @@ def generate_demo_acquisitions(
 
 def load_scan_a_acquisitions(
     directory: Path | None = None,
+    metadata_path: Path | None = None,
 ) -> tuple[Acquisition, ...]:
     """
     Charge les acquisitions réelles disponibles dans SCAN_A_DIR.
@@ -334,6 +336,8 @@ def load_scan_a_acquisitions(
         in SUPPORTED_EXTENSIONS
     )
 
+    metadata = load_metadata(metadata_path)
+
     acquisitions = []
 
     for index, path in enumerate(
@@ -355,12 +359,39 @@ def load_scan_a_acquisitions(
             is_simulation=False,
         )
 
+        acquisition_id = f"scan_a_{index:04d}"
+        row = metadata.get(acquisition_id, {})
+
+        session_id = row.get("session_id")
+        timestamp = row.get("timestamp")
+
+        params = {
+            key: row[key]
+            for key in (
+                "campaign_phase",
+                "device_id",
+                "probe_id",
+                "preset",
+                "frequency",
+                "gain",
+                "depth",
+                "focus",
+                "target_id",
+                "operator_id",
+                "notes",
+            )
+            if key in row
+        }
+
         acquisition = Acquisition(
-            id=f"scan_a_{index:04d}",
+            id=acquisition_id,
             source=DataSource.SCAN_A.value,
             t=index,
             image=image,
+            params=params,
             provenance=provenance,
+            session_id=session_id,
+            timestamp=timestamp,
             truth_level=0.0,
         )
 
