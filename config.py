@@ -8,9 +8,13 @@ BASELINE_DIR = DATA_DIR / "baseline"
 SIMULATIONS_DIR = DATA_DIR / "simulations"
 OUTPUT_DIR = ROOT / "outputs"
 
-SCAN_A_DIR = RAW_DIR / "scan_a"
+EXPERIMENTAL_DATA_DIR = RAW_DIR / "experimental_ultrasound"
 PUBLIC_DATA_DIR = RAW_DIR / "public_ultrasound"
 DEMO_DATA_DIR = RAW_DIR / "demo_simulated"
+
+# Backward-compatible path alias for legacy experimental datasets.
+# New code should use EXPERIMENTAL_DATA_DIR.
+SCAN_A_DIR = EXPERIMENTAL_DATA_DIR
 
 RANDOM_SEED = 42
 ANALYSIS_SIZE = 128
@@ -31,8 +35,8 @@ ALPHA_CRITICAL = 0.999
 
 RUN_MODE = "AUTO"
 
-PROJECT_NAME = "SCAN A Digital Twin"
-PROJECT_VERSION = "3.0"
+PROJECT_NAME = "Intelligent Ultrasound Digital Twin"
+PROJECT_VERSION = "4.0"
 SIGNATURE_VERSION = "2.0"
 PIPELINE_SCHEMA_VERSION = "1.0"
 
