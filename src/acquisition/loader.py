@@ -38,6 +38,7 @@ from config import (
     ANALYSIS_SIZE,
     DEMO_DATA_DIR,
     EXPERIMENTAL_DATA_DIR,
+    PUBLIC_DATA_DIR,
 )
 from src.acquisition.metadata import load_metadata
 from src.acquisition.models import Acquisition
@@ -275,15 +276,16 @@ def generate_demo_acquisitions(
 
         provenance = DataProvenance(
             source=DataSource.SIMULATED,
-            dataset="SCAN_A_Digital_Twin_Demo",
+            dataset="Intelligent_Ultrasound_Digital_Twin_Demo",
             relative_path=str(
                 path.relative_to(
                     DEMO_DATA_DIR.parent.parent
                 )
             ),
-            is_real_scan_a=False,
+            is_experimental=False,
             is_public_reference=False,
             is_simulation=True,
+            is_real_scan_a=False,
         )
 
         acquisition = Acquisition(
@@ -295,6 +297,9 @@ def generate_demo_acquisitions(
             truth_level=0.0,
             simulation_scenario="normal_reference",
             simulation_severity=0.0,
+            parent_acquisition_id=None,
+            simulation_seed=seed + index,
+            simulation_version="1.0",
         )
 
         acquisition.validate()
@@ -354,14 +359,15 @@ def load_experimental_acquisitions(
         )
 
         provenance = DataProvenance(
-            source=DataSource.SCAN_A,
-            dataset="SCAN_A",
+            source=DataSource.EXPERIMENTAL,
+            dataset="experimental_ultrasound",
             relative_path=str(
                 path.relative_to(root)
             ),
-            is_real_scan_a=True,
+            is_experimental=True,
             is_public_reference=False,
             is_simulation=False,
+            is_real_scan_a=False,
         )
 
         relative_path = str(path.relative_to(root)).replace("\\\\", "/")
@@ -399,7 +405,7 @@ def load_experimental_acquisitions(
 
         acquisition = Acquisition(
             id=acquisition_id,
-            source=DataSource.SCAN_A.value,
+            source=DataSource.EXPERIMENTAL.value,
             t=index,
             image=image,
             params=params,
@@ -450,15 +456,16 @@ def build_controlled_degradation(
 
     provenance = DataProvenance(
         source=DataSource.SIMULATED,
-        dataset="SCAN_A_Digital_Twin_Simulation",
+        dataset="Intelligent_Ultrasound_Digital_Twin_Simulation",
         relative_path=(
             acquisition.provenance.relative_path
             if acquisition.provenance is not None
             else acquisition.id
         ),
-        is_real_scan_a=False,
+        is_experimental=False,
         is_public_reference=False,
         is_simulation=True,
+        is_real_scan_a=False,
     )
 
     degraded = Acquisition(
@@ -485,11 +492,60 @@ def build_controlled_degradation(
         simulation_severity=float(
             severity
         ),
+        parent_acquisition_id=acquisition.id,
+        simulation_seed=seed,
+        simulation_version="1.0",
     )
 
     degraded.validate()
 
     return degraded
+
+
+def load_public_acquisitions(
+    directory: Path | None = None,
+    *,
+    dataset_name: str = "public_ultrasound",
+) -> tuple[Acquisition, ...]:
+    """Load public ultrasound images while preserving public provenance.
+
+    This loader intentionally treats the dataset as a reference imaging
+    source; it does not imply device-specific SCAN A behavior.
+    """
+    root = PUBLIC_DATA_DIR if directory is None else Path(directory)
+    if not root.exists():
+        return tuple()
+
+    paths = sorted(
+        path for path in root.rglob("*")
+        if path.is_file() and path.suffix.lower() in SUPPORTED_EXTENSIONS
+    )
+
+    acquisitions = []
+    for index, path in enumerate(paths):
+        image = _load_image(path)
+        relative = str(path.relative_to(root)).replace("\\", "/")
+        provenance = DataProvenance(
+            source=DataSource.PUBLIC,
+            dataset=dataset_name,
+            relative_path=relative,
+            is_experimental=False,
+            is_public_reference=True,
+            is_simulation=False,
+            is_real_scan_a=False,
+        )
+        acquisition = Acquisition(
+            id=f"public_{index:05d}",
+            source=DataSource.PUBLIC.value,
+            t=index,
+            image=image,
+            provenance=provenance,
+            truth_level=0.0,
+        )
+        acquisition.validate()
+        acquisitions.append(acquisition)
+
+    return tuple(acquisitions)
 
 
 def load_acquisitions(
