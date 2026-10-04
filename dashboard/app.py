@@ -29,18 +29,18 @@ st.markdown(
   --warn:#a86d09; --danger:#b33b47; --shadow:0 1px 4px rgba(25,45,60,.08);
 }
 .stApp{background:var(--bg);color:var(--text)}
-[data-testid="stHeader"]{background:rgba(231,237,241,.94)}
+[data-testid="stHeader"]{display:none}
 .block-container{max-width:1640px;padding:0 2rem 3rem}
 section[data-testid="stSidebar"]{background:#f4f7f9;border-right:1px solid var(--line)}
 section[data-testid="stSidebar"] .block-container{padding-top:1rem}
 h1,h2,h3,h4{color:var(--text)}
 .small,.muted{color:var(--muted)}
 .eyebrow{color:var(--blue);font-size:.62rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase}
-.appbar{background:var(--navy);color:#f4f8fa;margin:0 -2rem 18px;padding:13px 2rem;
- display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--blue)}
-.appbar-title{font-size:.88rem;font-weight:800;letter-spacing:.08em}
-.appbar-sub{font-size:.66rem;color:#b9c9d4;margin-top:3px}
-.appbar-status{font-size:.63rem;font-weight:850;letter-spacing:.1em;padding:6px 10px;border:1px solid #718b9d;border-radius:4px}
+.appbar{background:var(--navy);color:#f4f8fa;margin:0 -2rem 18px;padding:14px 2rem;
+ display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #47667b}
+.appbar-title{font-size:.98rem;font-weight:850;letter-spacing:.06em}
+.appbar-sub{font-size:.68rem;color:#b9c9d4;margin-top:4px;letter-spacing:.03em}
+.appbar-status{font-size:.62rem;font-weight:850;letter-spacing:.08em;padding:6px 9px;border:1px solid #718b9d;border-radius:3px}
 .hero{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--blue);
  border-radius:5px;padding:17px 21px;margin-bottom:10px;box-shadow:var(--shadow)}
 .hero h1{margin:.18rem 0 .25rem;font-size:1.72rem;letter-spacing:-.018em}
@@ -171,8 +171,12 @@ with st.sidebar:
 st.markdown(
     '<div class="appbar">'
     '<div><div class="appbar-title">SCAN A · INTELLIGENT ULTRASOUND DIGITAL TWIN</div>'
-    '<div class="appbar-sub">BIOMEDICAL ENGINEERING CONDITION-MONITORING WORKSTATION</div></div>'
-    f'<div class="appbar-status">{source_label} · {state}</div></div>'
+    '<div class="appbar-sub">Biomedical Engineering · Condition Monitoring</div></div>'
+    f'<div class="appbar-status">● {state}</div></div>',
+    unsafe_allow_html=True,
+)
+
+st.markdown(
     '<div class="hero">'
     '<div class="eyebrow">SYSTEM OVERVIEW</div>'
     '<h1>Engineering condition assessment</h1>'
