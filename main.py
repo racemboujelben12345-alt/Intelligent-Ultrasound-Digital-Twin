@@ -347,6 +347,31 @@ def run_pipeline() -> None:
 
                 "drift_status":
                     drift_status,
+
+                "ai_anomaly_score":
+                    result.ai.anomaly_score,
+
+                "ai_anomaly_evidence":
+                    result.ai.anomaly_probability,
+
+                "ai_confidence":
+                    result.ai.confidence,
+
+                "ai_ensemble_agreement":
+                    result.ai.ensemble_agreement,
+
+                "intelligence_fused_score":
+                    result.fusion.fused_score,
+
+                "intelligence_confidence":
+                    result.fusion.confidence,
+
+                "intelligence_state":
+                    result.fusion.state,
+
+                "ai_top_feature":
+                    result.ai_feature_contributions[0][0]
+                    if result.ai_feature_contributions else None,
             }
         )
 
@@ -508,7 +533,17 @@ def run_pipeline() -> None:
         ),
         (
             "- Variables de signature : "
-            f"{len(feature_names)}"
+            f"{len(feature_names)}",
+        "",
+        "## AI intelligence",
+        "",
+        f"- AI anomaly evidence : {latest.ai.anomaly_score:.4f}",
+        f"- AI ensemble agreement : {latest.ai.ensemble_agreement:.4f}",
+        f"- AI confidence : {latest.ai.confidence:.4f}",
+        f"- Fused intelligence score : {latest.fusion.fused_score:.4f}",
+        f"- Fused confidence : {latest.fusion.confidence:.4f}",
+        f"- Intelligence state : {latest.fusion.state}",
+        f"- Dominant AI feature : {latest.ai_feature_contributions[0][0] if latest.ai_feature_contributions else "N/A"}"
         ),
         "",
         "## Dernière acquisition analysée",
