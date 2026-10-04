@@ -48,3 +48,12 @@ AI validation must include:
 An AI output such as ANOMALY with high model probability means strong computational anomaly evidence under the trained/reference distribution.
 It does not mean a hardware-failure probability, physical component defect probability, clinical diagnosis, or remaining-useful-life estimate.
 Physical interpretation requires device-specific experimental validation.
+
+## Semantic safeguards
+
+The ensemble vote fraction is reported as **anomaly vote rate**, not as a calibrated
+probability. A true probability interpretation requires held-out calibration
+data and a documented calibration procedure.
+
+The anomaly score is likewise an evidence score. Its numerical range [0,1] is a
+normalization convenience, not a probability scale.
