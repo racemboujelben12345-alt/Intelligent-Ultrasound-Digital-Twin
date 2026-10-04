@@ -72,7 +72,7 @@ def build_signature_matrix(
 
 def run_pipeline() -> None:
     """
-    Pipeline principal du SCAN A Digital Twin V3.
+    Pipeline principal de l'Intelligent Ultrasound Digital Twin.
 
     Architecture :
 
@@ -112,8 +112,8 @@ def run_pipeline() -> None:
     # ==============================================================
 
     acquisitions = get_acquisitions(
-        prefer_scan_a=True,
-        minimum_scan_a=C.MIN_BASELINE_ACQUISITIONS,
+        prefer_experimental=True,
+        minimum_experimental=C.MIN_BASELINE_ACQUISITIONS,
         demo_size=(
             C.MIN_TOTAL_ACQUISITIONS
             + 10
@@ -624,7 +624,7 @@ def run_pipeline() -> None:
     )
 
     print("-" * 70)
-    print("DIGITAL TWIN V3 PIPELINE OK")
+    print("DIGITAL TWIN ULTRASOUND DIGITAL TWIN PIPELINE OK")
     print("=" * 70)
 
 
