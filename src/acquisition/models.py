@@ -91,7 +91,7 @@ class Acquisition:
             expected_source = self.provenance.source.value
             if self.source != expected_source:
                 # Legacy SCAN A objects remain valid if the provenance is legacy.
-                legacy_ok = self.source == "scan_a" and self.provenance.source == self.provenance.source.SCAN_A
+                legacy_ok = self.source == "scan_a" and self.provenance.source.value == "scan_a"
                 if not legacy_ok:
                     raise ValueError(
                         f"Incohérence entre source et provenance : {self.source} != {expected_source}"
