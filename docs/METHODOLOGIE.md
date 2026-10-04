@@ -1,34 +1,53 @@
 # Méthodologie et justification des choix
 
-**Statut** : modèle numérique expérimental (digital shadow, niveau 1) : pas de synchronisation bidirectionnelle avec l'appareil.
+**Statut** : prototype de jumeau numérique fondé sur les données, sans synchronisation bidirectionnelle obligatoire avec un appareil physique.
 
-## Features (12) — `image_analysis.py`
-Intensité (moyenne, écart-type), contraste RMS = σ/μ, bruit = MAD du résidu image − gaussienne(1.5) (×1.4826), SNR = μ/bruit, netteté = variance du laplacien, gradient moyen, entropie (64 bins), homogénéité et contraste GLCM (16 niveaux, offset horizontal, symétrique), non-uniformité = CV des moyennes de 4×4 blocs, ratio de puissance haute fréquence (FFT, rayon > 0.25).
-Limite : le « bruit » mesuré inclut le speckle ; il n'est pas un bruit électronique pur.
+## 1. Données
+Le pipeline sépare trois sources :
 
-## Digital Signature
-μ, σ estimés sur le baseline. Distance de **Mahalanobis** sur variables standardisées avec covariance **Ledoit-Wolf** (shrinkage) car n_baseline (30) est proche du nombre de features (12). Seuils : quantiles du χ² à 12 ddl (95 / 99 / 99.9 %) → Normal / Early / Significant / Critical. Hypothèse : normalité approximative ; l'écart est vérifié par le taux de faux positifs sur le holdout.
+- **experimental** : acquisitions d'un système d'échographie physique ;
+- **public** : datasets publics utilisés pour développement et benchmark ;
+- **simulated** : images générées ou soumises à des dégradations contrôlées.
 
-## IQS (indicateur expérimental, pas un score clinique)
-IQS = 100 + 10·(s − s̄₀)/σ_s₀, avec s = −moyenne pondérée des |z| de 6 indicateurs (contraste, bruit, netteté, gradient, non-uniformité, HF). Valeur absolue car une dérive peut aller dans les deux sens (le flou *réduit* le bruit estimé). Poids égaux ; analyse de sensibilité : corrélation de Spearman avec 200 tirages Dirichlet de poids.
+Cette séparation est essentielle pour éviter de présenter un benchmark public ou une simulation comme une mesure spécifique d'un équipement.
 
-## Détection de dérive
-Alerte Mahalanobis si ≥ 3 acquisitions consécutives hors Normal. EWMA (λ=0.2, L=3) et CUSUM unilatéral (k=0.5, h=5) sur l'IQS standardisé. Ces cartes de contrôle SPC sont le comparateur de référence des modèles ML.
+## 2. Digital Signature
+Les images sont converties en un vecteur de caractéristiques quantitatives : intensité, dispersion, contraste, bruit apparent, SNR, netteté, gradient, entropie, texture/homogénéité, non-uniformité et contenu fréquentiel.
 
-## ML
-Isolation Forest, One-Class SVM (entraînés sur nominal seul), reconstruction PCA (équivalent linéaire d'un autoencodeur, seuil calibré en validation croisée 5 plis). RandomForest sur scénarios simulés (étiquettes = scénarios, jamais diagnostics).
+Le « bruit » image-domain peut inclure le speckle et ne doit pas être interprété comme un bruit électronique pur.
 
-## Fault lab et validité
-Les dégradations sont injectées sur des images nominales de test. Le taux de détection mesure la **limite de détection du pipeline** (sensibilité) ; il ne prouve pas la détection d'une dérive matérielle réelle (circularité : on mesure ce qu'on a injecté). La validation réelle passe par le bloc B3/B4 du protocole.
+## 3. Baseline et anomalie
+Une population nominale sert à estimer la variabilité multivariée. La distance de Mahalanobis et les méthodes de contrôle statistique permettent de quantifier la déviation d'une nouvelle observation.
 
-## Jumeau adaptatif
-Référence glissante (30). Mise à jour seulement après 3 acquisitions nominales consécutives (contrôlée) ; comparée à la mise à jour aveugle, qui absorbe la dérive.
+Une distance élevée signifie une différence statistique par rapport à la référence ; elle n'identifie pas seule une cause physique.
 
-## Prédiction
-Régression linéaire sur les 10 dernières acquisitions, intervalle de prédiction à 95 % (loi de Student), tendance Stable/Improving/Degrading selon p < 0.05, nombre d'acquisitions avant IQS = 70 (baseline − 3σ) si la pente est significativement négative. Ne prédit pas une panne.
+## 4. Quality Assessment
+Le score de qualité est un indicateur expérimental construit à partir de dimensions d'image telles que contraste, bruit apparent, netteté, gradient, non-uniformité et contenu haute fréquence.
 
-## Datasets publics
-Développement et robustesse du code (`tools/public_benchmark.py`), jamais la signature de SCAN A. Des images de patients différents ne forment pas une série temporelle d'un appareil.
+Il ne s'agit ni d'un score clinique ni d'une mesure absolue de performance matérielle.
 
-## Tests
-`pytest tests` (9 tests : sens physique des features, signature, cartes de contrôle, tendance, jumeau adaptatif, séparation des sources).
+## 5. Simulation
+Le moteur applique des dégradations contrôlées : bruit, flou, réduction du contraste, déplacement d'intensité et variation du speckle.
+
+La simulation permet de tester la sensibilité et la cohérence du pipeline. Elle ne constitue pas une preuve de panne réelle.
+
+## 6. Drift et tendance
+EWMA/CUSUM et l'analyse temporelle permettent d'étudier les changements persistants de la signature.
+
+La tendance ne doit pas être présentée comme une date de panne ou une RUL sans validation expérimentale appropriée.
+
+## 7. ML
+Les modèles non supervisés peuvent être comparés sur les données nominales. Les labels de scénarios simulés peuvent servir à tester la reconnaissance de dégradations injectées, mais ne doivent pas être décrits comme des diagnostics de panne physique.
+
+## 8. Validation
+La validation suit quatre niveaux :
+
+1. tests logiciels ;
+2. benchmark public ;
+3. simulation contrôlée ;
+4. acquisitions expérimentales répétées lorsque disponibles.
+
+Les performances sur simulation mesurent la capacité du pipeline à détecter les perturbations que nous avons définies.
+
+## 9. Principe de généralisation
+Le Digital Twin est volontairement indépendant d'un modèle particulier d'échographe. Des données provenant ultérieurement d'un appareil spécifique peuvent être ajoutées comme couche expérimentale et servir à calibrer/valider le jumeau.
