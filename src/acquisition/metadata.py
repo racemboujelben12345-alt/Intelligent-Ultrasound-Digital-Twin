@@ -28,6 +28,14 @@ OPTIONAL_COLUMNS = {
     "target_id",
     "operator_id",
     "notes",
+    "file_path",
+    "file_format",
+    "tgc",
+    "dynamic_range",
+    "dimensions",
+    "bit_depth",
+    "frame_count",
+    "quality_flag",
 }
 
 
@@ -84,13 +92,23 @@ def load_metadata(path: Path | None) -> dict[str, dict[str, Any]]:
                         f"{clean['timestamp']}"
                     ) from exc
 
-            for key in ("frequency", "gain", "depth", "focus"):
+            for key in ("frequency", "gain", "depth", "focus", "dynamic_range"):
                 if key in clean:
                     try:
                         clean[key] = float(clean[key])
                     except ValueError as exc:
                         raise ValueError(
                             f"Invalid numeric value for {key} "
+                            f"in {acquisition_id}: {clean[key]}"
+                        ) from exc
+
+            for key in ("bit_depth", "frame_count"):
+                if key in clean:
+                    try:
+                        clean[key] = int(clean[key])
+                    except ValueError as exc:
+                        raise ValueError(
+                            f"Invalid integer value for {key} "
                             f"in {acquisition_id}: {clean[key]}"
                         ) from exc
 
