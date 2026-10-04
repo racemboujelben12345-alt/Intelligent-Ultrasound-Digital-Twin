@@ -11,7 +11,7 @@ Digital Signature (13 features)
       ↓
 AI ENSEMBLE: multiple Isolation Forest models
       ↓
-Anomaly Score + Anomaly Probability + Ensemble Agreement + Evidence Confidence
+Anomaly Evidence + Anomaly Vote Rate + Ensemble Agreement + Evidence Confidence
       ↓
 NOMINAL / WATCH / ANOMALY
 
@@ -45,7 +45,7 @@ AI validation must include:
 10. external validation where data permit
 
 ## Scientific boundary
-An AI output such as ANOMALY with high model probability means strong computational anomaly evidence under the trained/reference distribution.
+An AI output such as ANOMALY with high vote rate or anomaly evidence score means strong computational anomaly evidence under the trained/reference distribution.
 It does not mean a hardware-failure probability, physical component defect probability, clinical diagnosis, or remaining-useful-life estimate.
 Physical interpretation requires device-specific experimental validation.
 
