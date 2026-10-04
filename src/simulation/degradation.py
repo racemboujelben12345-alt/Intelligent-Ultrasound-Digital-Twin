@@ -51,6 +51,8 @@ class DegradationResult:
     image: np.ndarray
     degradation_type: str
     severity: float
+    seed: int | None = None
+    simulation_version: str = "1.0"
 
     def validate(self) -> None:
         """Vérifie la cohérence du résultat."""
@@ -68,6 +70,12 @@ class DegradationResult:
             raise ValueError(
                 "La sévérité doit être comprise entre 0 et 1."
             )
+
+        if self.seed is not None and not isinstance(self.seed, int):
+            raise TypeError("seed doit être un entier ou None.")
+
+        if not self.simulation_version:
+            raise ValueError("simulation_version ne peut pas être vide.")
 
         if not self.degradation_type:
             raise ValueError(
@@ -302,6 +310,8 @@ def apply_degradation(
         image=degraded,
         degradation_type=degradation.value,
         severity=severity,
+        seed=seed,
+        simulation_version="1.0",
     )
 
     result.validate()
