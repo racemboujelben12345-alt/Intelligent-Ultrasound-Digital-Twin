@@ -1,27 +1,52 @@
-# Protocole expérimental SCAN A (à valider avec Dr. Nssibi)
+# Protocole expérimental — Système d'échographie
 
-## 1. Avant la première acquisition (Phase 1 — à remplir, rien n'est inventé)
-| Question | Réponse constatée sur l'équipement |
+## 1. Avant la première acquisition
+Documenter uniquement ce qui est réellement observé sur l'équipement :
+
+| Élément | Observation |
 |---|---|
-| Format de sortie : image 2D, A-scan 1D, capture d'écran, export DICOM/BMP ? | |
-| Réglages accessibles (gain, profondeur, fréquence, TGC, focus) | |
-| Fantôme disponible (type, structures, âge) | |
-| Mode d'export des données (clé USB, photo d'écran) | |
-Si la sortie est un A-scan : remplacer `twin/image_analysis.py` par des features de signal.
+| Format de sortie : image 2D, A-scan 1D, capture, DICOM/BMP… | |
+| Réglages accessibles : gain, profondeur, fréquence, TGC, focus… | |
+| Sonde/probe | |
+| Fantôme ou référence disponible | |
+| Mode d'export | |
 
-## 2. Conditions fixes pour toute une série
-Même salle, même fantôme, même position/angle du capteur (repère physique), même quantité de gel, mêmes réglages, même opérateur si possible. Noter dans un tableau : id, date/heure, opérateur, réglages, remarques.
+Si la sortie est un A-scan 1D, prévoir une branche d'analyse de signal complémentaire aux features image.
 
-## 3. Plan d'acquisition minimal
+## 2. Conditions fixes
+Pour une série nominale, conserver autant que possible :
+
+- même salle ;
+- même fantôme/référence ;
+- même position et angle de la sonde ;
+- mêmes réglages ;
+- même opérateur si possible ;
+- mêmes conditions de préparation.
+
+Noter l'identifiant, la date/heure, la session, les réglages et les remarques.
+
+## 3. Plan d'acquisition recommandé
 | Bloc | Contenu | Rôle |
 |---|---|---|
-| B1 | ≥ 30 acquisitions répétées, mêmes conditions | baseline (Digital Signature) |
-| B2 | ≥ 10 acquisitions répétées, autre moment | holdout nominal (faux positifs) |
-| B3 | Variations réelles NON destructives : gain ±, profondeur ±, gel réduit, pression/angle modifiés | sensibilité réelle, comparée aux dégradations virtuelles |
-| B4 | Séries espacées dans le temps (jours/semaines) | seul moyen d'étudier une vraie évolution |
+| B1 | acquisitions répétées sous conditions nominales | construire la référence |
+| B2 | acquisitions nominales indépendantes à un autre moment | estimer les faux positifs |
+| B3 | variations non destructives et autorisées d'un paramètre | tester la sensibilité du Digital Twin |
+| B4 | séries espacées dans le temps | étudier une évolution réelle si disponible |
+
+Les perturbations physiques ne doivent être réalisées que si elles sont sûres, autorisées et documentées.
 
 ## 4. Nommage
-`YYYYMMDD_HHMM_bloc_nn.png` (l'ordre alphabétique = ordre chronologique, exigé par le loader).
+Utiliser un identifiant unique et conserver les métadonnées dans un fichier associé. L'ordre temporel doit être explicitement représenté par le timestamp plutôt que déduit uniquement du nom de fichier.
 
-## 5. Critères d'acceptation
-Répétabilité : CV du baseline reportés par feature (voir rapport). Une feature avec CV très élevé en conditions identiques n'est pas exploitable.
+## 5. Critères de validation
+Reporter :
+
+- répétabilité des features ;
+- variabilité du baseline ;
+- faux positifs sur le holdout ;
+- évolution du quality score ;
+- réponse aux dégradations simulées ;
+- cohérence entre simulation et observations expérimentales lorsque celles-ci existent.
+
+## 6. Cas d'un appareil particulier
+Si des données provenant d'un modèle précis d'échographe sont obtenues, elles sont intégrées comme **experimental case study**. Le projet conserve son architecture générique et le nom du modèle ne devient pas une dépendance du Digital Twin.
