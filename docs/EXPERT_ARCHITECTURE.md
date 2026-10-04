@@ -17,7 +17,7 @@ Build a traceable computational representation of the observable imaging behavio
 11. Intelligence Fusion — combine statistical deviation, AI evidence and quality with explicit weights and disagreement penalty.
 12. Drift/Prediction — quantify temporal direction without claiming physical RUL.
 13. Validation — compare outputs with explicit ground truth.
-12. Reporting/Dashboard — present results without changing analytical decisions.
+13. Reporting/Dashboard — present results without changing analytical decisions.
 
 ## Why this is a Digital Twin prototype
 The project is not simply image classification. Each ultrasound acquisition is treated as an observation of an imaging-system process. The Digital Signature provides a compact state vector, the baseline represents nominal behaviour, and history/drift layers monitor its evolution.
