@@ -337,6 +337,11 @@ def load_scan_a_acquisitions(
     )
 
     metadata = load_metadata(metadata_path)
+    metadata_by_file = {
+        str(row.get("file_path", "")).replace("\\\\", "/").lstrip("./"): row
+        for row in metadata.values()
+        if row.get("file_path")
+    }
 
     acquisitions = []
 
@@ -359,8 +364,10 @@ def load_scan_a_acquisitions(
             is_simulation=False,
         )
 
-        acquisition_id = f"scan_a_{index:04d}"
-        row = metadata.get(acquisition_id, {})
+        relative_path = str(path.relative_to(root)).replace("\\\\", "/")
+        fallback_id = f"scan_a_{index:04d}"
+        row = metadata_by_file.get(relative_path, metadata.get(fallback_id, {}))
+        acquisition_id = row.get("acquisition_id", fallback_id)
 
         session_id = row.get("session_id")
         timestamp = row.get("timestamp")
@@ -378,6 +385,13 @@ def load_scan_a_acquisitions(
                 "focus",
                 "target_id",
                 "operator_id",
+                "file_format",
+                "tgc",
+                "dynamic_range",
+                "dimensions",
+                "bit_depth",
+                "frame_count",
+                "quality_flag",
                 "notes",
             )
             if key in row
