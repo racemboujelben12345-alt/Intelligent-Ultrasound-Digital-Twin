@@ -493,8 +493,8 @@ def build_controlled_degradation(
             severity
         ),
         parent_acquisition_id=acquisition.id,
-        simulation_seed=seed,
-        simulation_version="1.0",
+        simulation_seed=result.seed,
+        simulation_version=result.simulation_version,
     )
 
     degraded.validate()
