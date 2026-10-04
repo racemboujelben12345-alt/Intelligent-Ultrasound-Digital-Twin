@@ -1,5 +1,5 @@
 """
-SCAN A Digital Twin V2
+Intelligent Ultrasound Digital Twin V2
 ======================
 
 Digital Twin State.
