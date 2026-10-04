@@ -1,4 +1,4 @@
-"""Metadata utilities for real SCAN A acquisition campaigns.
+"""Metadata utilities for real ultrasound acquisition campaigns.
 
 The metadata layer is intentionally separate from image loading. It lets the
 experimental campaign record device settings, session information and phase
