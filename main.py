@@ -278,6 +278,7 @@ def run_pipeline() -> None:
         history=history,
         drift_engine=drift_engine,
         trend_engine=prediction_engine,
+        ai_training_source=f"{source}:baseline_reference",
     )
 
     # ==============================================================
