@@ -552,6 +552,8 @@ def load_acquisitions(
     *,
     prefer_experimental: bool = True,
     minimum_experimental: int = 30,
+    prefer_public: bool = True,
+    minimum_public: int = 30,
     prefer_scan_a: bool | None = None,
     minimum_scan_a: int | None = None,
     demo_size: int = 50,
@@ -578,6 +580,11 @@ def load_acquisitions(
         if len(experimental) >= minimum_experimental:
             return experimental
 
+    if prefer_public:
+        public = load_public_acquisitions()
+        if len(public) >= minimum_public:
+            return public
+
     return generate_demo_acquisitions(
         n_samples=demo_size,
         seed=seed,
@@ -600,6 +607,8 @@ def get_acquisitions(
     return load_acquisitions(
         prefer_experimental=prefer_experimental,
         minimum_experimental=minimum_experimental,
+        prefer_public=prefer_public,
+        minimum_public=minimum_public,
         prefer_scan_a=prefer_scan_a,
         minimum_scan_a=minimum_scan_a,
         demo_size=demo_size,
