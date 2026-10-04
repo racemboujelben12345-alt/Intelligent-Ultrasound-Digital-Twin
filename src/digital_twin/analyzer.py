@@ -39,6 +39,10 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from src.ai.intelligence import (
+    AIAnomalyAssessment,
+    UltrasoundAIEngine,
+)
 from src.anomaly.statistical import (
     AnomalyDetectionResult,
     StatisticalAnomalyDetector,
@@ -100,10 +104,13 @@ class TwinAnalysisResult:
 
     health: TwinHealthAssessment
 
+    ai: AIAnomalyAssessment
+
     def validate(self) -> None:
         self.detection.validate()
         self.state.validate()
         self.health.validate()
+        self.ai.validate()
         self.explanation.validate()
 
         if self.drift is not None:
@@ -181,6 +188,12 @@ class DigitalTwinAnalyzer:
 
         self.detector = StatisticalAnomalyDetector(
             baseline=baseline
+        )
+
+        self.ai_engine = UltrasoundAIEngine()
+        self.ai_engine.fit_reference(
+            baseline.X_reference,
+            feature_names=baseline.feature_names,
         )
 
         self.drift_engine = drift_engine
@@ -264,7 +277,13 @@ class DigitalTwinAnalyzer:
         )
 
         # ============================================================
-        # 4. Twin Health + Evidence Confidence
+        # 4. AI Ensemble Intelligence
+        # ============================================================
+
+        ai = self.ai_engine.assess(vector)
+
+        # ============================================================
+        # 5. Twin Health + Evidence Confidence
         # ============================================================
 
         source_scores = {
@@ -288,7 +307,7 @@ class DigitalTwinAnalyzer:
         )
 
         # ============================================================
-        # 5. Explainability
+        # 6. Explainability
         # ============================================================
 
         explanation = explain_detection(
@@ -297,7 +316,7 @@ class DigitalTwinAnalyzer:
         )
 
         # ============================================================
-        # 6. History update
+        # 7. History update
         # ============================================================
 
         if update_history:
@@ -306,7 +325,7 @@ class DigitalTwinAnalyzer:
             )
 
         # ============================================================
-        # 7. Temporal drift
+        # 8. Temporal drift
         # ============================================================
 
         drift = None
@@ -320,7 +339,7 @@ class DigitalTwinAnalyzer:
             )
 
         # ============================================================
-        # 8. Temporal trend
+        # 9. Temporal trend
         # ============================================================
 
         trend = None
@@ -334,7 +353,7 @@ class DigitalTwinAnalyzer:
             )
 
         # ============================================================
-        # 9. Complete result
+        # 10. Complete result
         # ============================================================
 
         result = TwinAnalysisResult(
@@ -345,6 +364,7 @@ class DigitalTwinAnalyzer:
             drift=drift,
             trend=trend,
             health=health,
+            ai=ai,
         )
 
         result.validate()
