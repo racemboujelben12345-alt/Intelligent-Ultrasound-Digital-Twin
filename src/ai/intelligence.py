@@ -14,7 +14,7 @@ probabilities, clinical diagnoses, or proof of hardware failure.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
 from typing import Any
