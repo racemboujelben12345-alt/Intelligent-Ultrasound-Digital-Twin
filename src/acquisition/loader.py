@@ -1,5 +1,5 @@
 """
-SCAN A Digital Twin V2
+Intelligent Ultrasound Digital Twin V2
 ======================
 
 Acquisition Loader
@@ -12,7 +12,7 @@ des données de démonstration contrôlées.
 
 Sources supportées
 ------------------
-- SCAN A réel
+- acquisition expérimentale réelle
 - données publiques de référence
 - données simulées
 
@@ -37,7 +37,7 @@ import numpy as np
 from config import (
     ANALYSIS_SIZE,
     DEMO_DATA_DIR,
-    SCAN_A_DIR,
+    EXPERIMENTAL_DATA_DIR,
 )
 from src.acquisition.metadata import load_metadata
 from src.acquisition.models import Acquisition
@@ -112,7 +112,7 @@ def _phantom(
     Génère un phantom ultrasonore synthétique de démonstration.
 
     Cette image est exclusivement destinée aux tests.
-    Elle ne représente pas une acquisition SCAN A réelle.
+    Elle ne représente pas une acquisition acquisition expérimentale réellele.
     """
 
     rng = np.random.default_rng(
@@ -308,19 +308,19 @@ def generate_demo_acquisitions(
     )
 
 
-def load_scan_a_acquisitions(
+def load_experimental_acquisitions(
     directory: Path | None = None,
     metadata_path: Path | None = None,
 ) -> tuple[Acquisition, ...]:
     """
-    Charge les acquisitions réelles disponibles dans SCAN_A_DIR.
+    Charge les acquisitions réelles disponibles dans EXPERIMENTAL_DATA_DIR.
 
     Aucun paramètre d'acquisition n'est inventé.
     Les métadonnées absentes restent absentes.
     """
 
     root = (
-        SCAN_A_DIR
+        EXPERIMENTAL_DATA_DIR
         if directory is None
         else Path(directory)
     )
@@ -503,17 +503,17 @@ def load_acquisitions(
     Point d'entrée principal de la couche acquisition.
 
     Priorité :
-        1. SCAN A réel si suffisamment d'acquisitions existent ;
+        1. acquisition expérimentale réelle si suffisamment d'acquisitions existent ;
         2. données simulées de démonstration sinon.
 
     Le fallback simulé est explicitement marqué SIMULATED.
     """
 
     if prefer_scan_a:
-        scan_a = load_scan_a_acquisitions()
+        experimental = load_experimental_acquisitions()
 
-        if len(scan_a) >= minimum_scan_a:
-            return scan_a
+        if len(experimental) >= minimum_scan_a:
+            return experimental
 
     return generate_demo_acquisitions(
         n_samples=demo_size,
@@ -538,3 +538,6 @@ def get_acquisitions(
         demo_size=demo_size,
         seed=seed,
     )
+
+# Backward-compatible alias for legacy callers.
+load_scan_a_acquisitions = load_experimental_acquisitions
