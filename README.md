@@ -23,6 +23,10 @@ Digital Twin State
       ↓
 Controlled Degradation Simulation
       ↓
+AI Ensemble Intelligence
+      ↓
+Statistical + AI Evidence Fusion
+      ↓
 Anomaly Detection
       ↓
 Drift / Trend Analysis
@@ -152,3 +156,48 @@ python -m pytest tests -q
 The project is an engineering research prototype.
 
 It is not a clinical diagnostic system, does not establish patient-specific conclusions, and does not automatically prove hardware failure. Experimental conclusions about a specific ultrasound system require traceable real acquisitions and appropriate validation.
+
+
+## Engineering intelligence layer
+
+The current architecture treats AI as a governed engineering layer:
+
+- **Unsupervised anomaly ensemble:** multiple Isolation Forest models with seed diversity and agreement analysis.
+- **Supervised intelligence:** Random Forest classification for validated engineering states or controlled simulation classes.
+- **Predictive intelligence:** Random Forest regression ensemble with empirical P05/P95 uncertainty.
+- **AI explainability:** leave-one-feature-out sensitivity ranking for the Digital Signature.
+- **Model governance:** model version, feature contract hash, training source, seeds and hyperparameters.
+- **Inference provenance:** acquisition ID, source, input hash and model version.
+- **Evidence fusion:** transparent combination of statistical deviation, AI evidence and quality, with a disagreement penalty.
+- **Scientific guardrails:** AI evidence is never presented as proof of physical hardware failure or as a clinical diagnosis.
+
+## Quality gates
+
+The repository separates:
+
+1. software/unit-test validity;
+2. data-contract and provenance validity;
+3. reproducible simulation validity;
+4. public benchmark validity;
+5. experimental repeatability;
+6. device-specific validation.
+
+The automated V&V command is:
+
+```bash
+python scripts/run_vv_audit.py --n 10
+```
+
+A successful software V&V audit does not establish physical validation of an
+ultrasound device.
+
+## Documentation map
+
+- `docs/EXPERT_ARCHITECTURE.md` — end-to-end system architecture.
+- `docs/PROJECT_SPEC.md` — scientific scope and boundaries.
+- `docs/DATA_CONTRACT.md` — acquisition and provenance contract.
+- `docs/AI_INTELLIGENCE_ARCHITECTURE.md` — AI methodology and validation.
+- `docs/AI_MODEL_GOVERNANCE.md` — AI provenance, explainability and governance.
+- `docs/TWIN_HEALTH_MODEL.md` — health/evidence model.
+- `docs/VALIDATION_MATRIX.md` — V&V strategy and evidence levels.
+- `docs/PROTOCOLE_EXPERIMENTAL.md` — experimental acquisition protocol.
