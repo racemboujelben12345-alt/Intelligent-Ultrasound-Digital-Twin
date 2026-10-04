@@ -701,6 +701,39 @@ d.metric(
     ),
 )
 
+st.markdown(
+    '<div class="section">AI & intelligence evidence</div>',
+    unsafe_allow_html=True,
+)
+
+ai1, ai2, ai3, ai4 = st.columns(4)
+
+ai1.metric(
+    "AI anomaly evidence",
+    fmt("ai_anomaly_score", 3),
+    help="Unsupervised AI evidence; not a physical-failure probability.",
+)
+
+ai2.metric(
+    "AI confidence",
+    fmt("ai_confidence", 3),
+    help="Ensemble confidence derived from model agreement and score dispersion.",
+)
+
+ai3.metric(
+    "Fused intelligence",
+    fmt("intelligence_fused_score", 3),
+    help="Transparent fusion of statistical, AI and quality evidence.",
+)
+
+ai4.metric(
+    "Fusion state",
+    get_value("intelligence_state", "—"),
+    help="Engineering evidence state, not a clinical or hardware-failure diagnosis.",
+)
+
+
+
 
 # ============================================================
 # TWIN HEALTH PANEL
