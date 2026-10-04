@@ -351,8 +351,8 @@ def run_pipeline() -> None:
                 "ai_anomaly_score":
                     result.ai.anomaly_score,
 
-                "ai_anomaly_evidence":
-                    result.ai.anomaly_probability,
+                "ai_anomaly_vote_rate":
+                    result.ai.anomaly_vote_rate,
 
                 "ai_confidence":
                     result.ai.confidence,
