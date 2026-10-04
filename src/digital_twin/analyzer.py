@@ -46,6 +46,10 @@ from src.anomaly.statistical import (
 from src.digital_twin.factory import (
     build_twin_state_from_detection,
 )
+from src.digital_twin.health import (
+    TwinHealthAssessment,
+    assess_twin_health,
+)
 from src.digital_twin.history import (
     DigitalTwinHistory,
 )
@@ -94,9 +98,12 @@ class TwinAnalysisResult:
 
     trend: TemporalPredictionResult | None
 
+    health: TwinHealthAssessment
+
     def validate(self) -> None:
         self.detection.validate()
         self.state.validate()
+        self.health.validate()
         self.explanation.validate()
 
         if self.drift is not None:
@@ -109,6 +116,11 @@ class TwinAnalysisResult:
             raise ValueError(
                 "Incohérence entre detection.state et state.state."
             )
+
+        if self.health.health_state not in {
+            "NOMINAL", "WATCH", "EARLY_DRIFT", "HIGH_DEVIATION"
+        }:
+            raise ValueError("Invalid Twin Health state.")
 
         if not np.isclose(
             self.state.mahalanobis_squared,
@@ -252,7 +264,31 @@ class DigitalTwinAnalyzer:
         )
 
         # ============================================================
-        # 4. Explainability
+        # 4. Twin Health + Evidence Confidence
+        # ============================================================
+
+        source_scores = {
+            "experimental": 100.0,
+            "public": 80.0,
+            "simulated": 60.0,
+            "scan_a": 100.0,
+        }
+        provenance_score = source_scores.get(
+            str(source).lower(),
+            50.0,
+        )
+
+        health = assess_twin_health(
+            quality_score=state.quality_score,
+            mahalanobis_distance=state.mahalanobis_distance,
+            baseline_observations=self.baseline.n_samples,
+            feature_count=self.baseline.n_features,
+            expected_feature_count=self.baseline.n_features,
+            provenance_score=provenance_score,
+        )
+
+        # ============================================================
+        # 5. Explainability
         # ============================================================
 
         explanation = explain_detection(
@@ -261,7 +297,7 @@ class DigitalTwinAnalyzer:
         )
 
         # ============================================================
-        # 5. History update
+        # 6. History update
         # ============================================================
 
         if update_history:
@@ -270,7 +306,7 @@ class DigitalTwinAnalyzer:
             )
 
         # ============================================================
-        # 6. Temporal drift
+        # 7. Temporal drift
         # ============================================================
 
         drift = None
@@ -284,7 +320,7 @@ class DigitalTwinAnalyzer:
             )
 
         # ============================================================
-        # 7. Temporal trend
+        # 8. Temporal trend
         # ============================================================
 
         trend = None
@@ -298,7 +334,7 @@ class DigitalTwinAnalyzer:
             )
 
         # ============================================================
-        # 8. Complete result
+        # 9. Complete result
         # ============================================================
 
         result = TwinAnalysisResult(
@@ -308,6 +344,7 @@ class DigitalTwinAnalyzer:
             explanation=explanation,
             drift=drift,
             trend=trend,
+            health=health,
         )
 
         result.validate()
