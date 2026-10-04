@@ -1,78 +1,52 @@
-# SCAN A — Intelligent Ultrasound Digital Twin V3
+# Intelligent Ultrasound Digital Twin
 
-Prototype de jumeau numérique orienté ingénierie pour le monitoring statistique et temporel d'un système d'échographie SCAN A.
+Prototype de jumeau numérique orienté ingénierie pour un système d'échographie.
 
-## Architecture
+Le projet vise à construire une représentation numérique traçable du comportement d'un système d'imagerie ultrasonore à partir de données échographiques, de caractéristiques quantitatives d'image et de simulations contrôlées.
+
+## Objectif
+
+Le Digital Twin combine :
 
 ```text
-Acquisition
-     ↓
-Digital Signature
-     ↓
+Ultrasound Data
+      ↓
+Preprocessing
+      ↓
+Digital Signature / Image Features
+      ↓
+Quality Assessment
+      ↓
 Statistical Baseline
-     ↓
-Anomaly Detection
-     ↓
+      ↓
 Digital Twin State
-     ↓
-Drift
-     ↓
-Prediction / Trend
-     ↓
-Validation
-     ↓
-Reporting
-     ↓
-Dashboard
+      ↓
+Controlled Degradation Simulation
+      ↓
+Anomaly Detection
+      ↓
+Drift / Trend Analysis
+      ↓
+Prediction & Engineering Dashboard
 ```
 
-Le pipeline exécuté sépare explicitement la baseline, la calibration temporelle et les acquisitions de test.
+L'objectif n'est pas de diagnostiquer un patient ni de prouver automatiquement une panne matérielle. Le système fournit un cadre d'analyse et de surveillance de la qualité d'imagerie.
 
-## Exécution
+## Data strategy
 
-```bash
-pip install -r requirements.txt
-python main.py
-streamlit run dashboard/app.py
-```
+Le pipeline distingue explicitement trois origines :
 
-Les tests logiciels :
+- **experimental** : acquisitions provenant d'un système d'échographie physique ;
+- **public** : datasets publics d'échographie utilisés pour le développement et le benchmark ;
+- **simulated** : données générées ou images soumises à des dégradations contrôlées.
 
-```bash
-python -m pytest tests -q
-```
+Cette séparation empêche une donnée publique ou simulée d'être présentée comme une mesure spécifique d'un équipement physique.
 
-## Données SCAN A réelles
-
-Placer les acquisitions image dans :
-
-```text
-data/raw/scan_a/
-```
-
-Formats supportés par le pipeline image : PNG, JPG/JPEG et TIFF selon les loaders utilisés.
-
-La source `scan_a` doit rester distincte des données de démonstration et des datasets publics.
-
-La partition nominale actuelle est :
-
-- **Baseline** : 30 acquisitions
-- **Calibration** : 10 acquisitions nominales indépendantes
-- **Test** : acquisitions restantes
-
-La constante centrale `MIN_TOTAL_ACQUISITIONS` définit le minimum requis pour exécuter le pipeline.
-
-## Données simulées et datasets publics
-
-Si suffisamment d'acquisitions SCAN A réelles ne sont pas disponibles, le mode automatique peut utiliser les données simulées prévues par le projet.
-
-Les datasets publics présents dans `data/raw/public_ultrasound/` servent au développement, au benchmark et à la vérification logicielle du pipeline. Ils ne doivent jamais être utilisés silencieusement pour construire la baseline réelle du SCAN A.
-
-Une dégradation virtuelle constitue une **validation logicielle contrôlée** : elle ne prouve pas l'existence d'une panne physique sur le système SCAN A.
+Des données provenant ultérieurement d'un équipement particulier peuvent être intégrées comme **cas expérimental / validation**, sans modifier le cœur du Digital Twin.
 
 ## Digital Signature
 
-La signature numérique actuelle décrit l'acquisition par des caractéristiques quantitatives d'image, notamment :
+La signature numérique décrit une image échographique par des caractéristiques quantitatives telles que :
 
 - intensité moyenne et dispersion ;
 - dynamique et contraste ;
@@ -82,54 +56,99 @@ La signature numérique actuelle décrit l'acquisition par des caractéristiques
 - statistiques du gradient ;
 - netteté Laplacienne.
 
-La signature est ensuite comparée à une baseline statistique, notamment via la distance de Mahalanobis.
+Les caractéristiques sont utilisées pour construire une représentation multivariée de l'état d'imagerie.
 
-> Une distance de Mahalanobis élevée indique une déviation statistique par rapport à la population de référence. Elle n'identifie pas à elle seule la cause physique de cette déviation.
+## Quality monitoring
 
-### Cas A-scan
+Le module de qualité évalue les propriétés de l'image et leur cohérence avec une population de référence.
 
-Si le SCAN A fournit un signal A-scan 1D plutôt qu'une image, l'étage de signature doit être adapté à des caractéristiques de signal telles que l'amplitude, le SNR, la largeur des échos et les caractéristiques spectrales. L'architecture globale reste inchangée.
+Les résultats peuvent inclure :
 
-## Drift et tendance
+- quality score ;
+- contrast ;
+- noise-related indicators ;
+- sharpness ;
+- edge quality ;
+- texture / speckle indicators.
 
-Le monitoring temporel utilise une calibration indépendante et des méthodes de contrôle telles que EWMA/CUSUM.
+Une distance statistique élevée indique une déviation par rapport à la population de référence ; elle n'identifie pas à elle seule la cause physique.
 
-La composante de prédiction actuelle est une **analyse de tendance temporelle**. Elle ne doit pas être interprétée comme :
+## Digital Twin and simulation
 
-- une date de panne ;
-- une durée de vie résiduelle (RUL) ;
-- une probabilité clinique ;
-- une preuve de défaillance matérielle.
+Le Digital Twin représente l'état observé du système d'imagerie dans l'espace des caractéristiques.
 
-## Validation
+Le moteur de simulation permet de créer des scénarios contrôlés, par exemple :
+
+- bruit croissant ;
+- flou progressif ;
+- réduction du contraste ;
+- déplacement d'intensité ;
+- modification du speckle.
+
+Les scénarios servent à étudier la sensibilité du pipeline et à valider son comportement logiciel. Une dégradation simulée ne constitue pas une preuve de panne physique.
+
+## Anomaly detection
+
+Le détecteur statistique compare les signatures aux distributions de référence et produit :
+
+- distance de Mahalanobis ;
+- état du Digital Twin ;
+- contributions des caractéristiques ;
+- indicateurs de déviation.
+
+## Drift and trend
+
+Le monitoring temporel recherche une évolution persistante de la signature ou de la qualité.
+
+Les résultats de tendance sont des indicateurs d'évolution statistique. Ils ne doivent pas être interprétés comme une date de panne, une RUL ou une probabilité clinique sans données expérimentales et validation appropriées.
+
+## Validation strategy
 
 La validation est organisée en niveaux :
 
-1. **Validation logicielle** : tests unitaires et tests de cohérence du pipeline.
-2. **Validation par données simulées** : vérification du comportement face à des déviations contrôlées.
-3. **Validation expérimentale SCAN A** : répétabilité des acquisitions nominales.
-4. **Validation par perturbations contrôlées**, uniquement si elles sont sûres, documentées et autorisées sur l'équipement.
+1. **Validation logicielle** — tests unitaires et cohérence du pipeline.
+2. **Validation par données publiques** — benchmark méthodologique sur échographie.
+3. **Validation par simulations contrôlées** — dégradations connues et reproductibles.
+4. **Validation expérimentale** — acquisitions répétées sur un système physique lorsque disponibles.
+5. **Perturbations contrôlées** — uniquement si elles sont sûres, autorisées et documentées.
 
-Les métriques de classification disponibles dans `src/validation/metrics.py` nécessitent une vérité terrain explicitement définie. Elles ne doivent pas être calculées en inventant des labels de panne physique.
+## Project structure
 
-## Artefacts générés
+```text
+src/
+├── acquisition/       # ingestion, metadata, provenance
+├── image_analysis/    # image features and quality
+├── signature/         # baseline and statistical representation
+├── anomaly/           # anomaly detection
+├── digital_twin/      # twin state and orchestration
+├── simulation/        # controlled degradation scenarios
+├── drift/             # temporal monitoring
+├── prediction/        # trend analysis
+├── explainability/    # feature contributions
+├── validation/        # validation metrics and experiments
+└── reporting/         # engineering reports
 
-Après `python main.py`, le dossier `outputs/` contient notamment :
+dashboard/              # Streamlit interface
+tests/                  # automated tests
+docs/                   # methodology and architecture
+```
 
-- `summary.json` — résumé du run ;
-- `baseline.json` — paramètres et statistiques de référence ;
-- `twin_states.csv` — états temporels du Digital Twin ;
-- `features.csv` — Digital Signatures des acquisitions de test ;
-- `report.md` — rapport Markdown automatiquement généré.
+## Execution
 
-Le dashboard Streamlit lit ces artefacts sans modifier le moteur scientifique.
+```bash
+pip install -r requirements.txt
+python main.py
+streamlit run dashboard/app.py
+```
 
-## Documentation
+Tests :
 
-- `docs/EXPERT_ARCHITECTURE.md`
-- `docs/PROTOCOLE_EXPERIMENTAL.md`
-- `docs/METHODOLOGIE.md`
+```bash
+python -m pytest tests -q
+```
 
-## Principe scientifique
+## Scientific boundary
 
-Le projet vise à construire une représentation numérique traçable du comportement observé du SCAN A à partir d'acquisitions contrôlées. La distinction entre observation statistique, simulation numérique et validation physique est conservée à chaque étape.
+The project is an engineering research prototype.
+
+It is not a clinical diagnostic system, does not establish patient-specific conclusions, and does not automatically prove hardware failure. Experimental conclusions about a specific ultrasound system require traceable real acquisitions and appropriate validation.
