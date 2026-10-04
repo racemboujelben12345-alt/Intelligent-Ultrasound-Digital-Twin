@@ -160,6 +160,7 @@ class UltrasoundAIEngine:
         self.regressors: list[RandomForestRegressor] = []
         self.feature_names: tuple[str, ...] = ()
         self.reference_mean: np.ndarray | None = None
+        self.reference_anomaly_scores: np.ndarray | None = None
         self.model_cards: dict[str, AIModelCard] = {}
         self.fitted = False
 
@@ -218,6 +219,13 @@ class UltrasoundAIEngine:
             model.fit(Xs)
             self.models.append(model)
 
+        # Calibrate anomaly evidence against the reference population itself.
+        # This is an empirical percentile, not a calibrated probability.
+        reference_raw = np.vstack([
+            -model.score_samples(Xs) for model in self.models
+        ])
+        self.reference_anomaly_scores = np.mean(reference_raw, axis=0)
+
         self._card("unsupervised_anomaly", len(X), training_source, {
             "n_trees": self.n_trees, "n_models": self.n_models,
             "contamination": self.contamination,
@@ -235,8 +243,14 @@ class UltrasoundAIEngine:
         xs = self.unsupervised_scaler.transform(x)
         raw = np.asarray([-float(m.score_samples(xs)[0]) for m in self.models])
         center = float(np.mean(raw))
-        q05, q95 = np.percentile(raw, [5, 95])
-        score = float(np.clip((center - q05) / max(q95 - q05, 1e-9), 0.0, 1.0))
+        if self.reference_anomaly_scores is None:
+            raise RuntimeError("Reference anomaly calibration is unavailable.")
+
+        # Empirical CDF / percentile rank of the new sample in the reference
+        # population. A high percentile means stronger anomaly evidence.
+        score = float(
+            np.mean(self.reference_anomaly_scores <= center)
+        )
 
         votes = np.asarray([m.predict(xs)[0] == -1 for m in self.models])
         vote_rate = float(np.mean(votes))
