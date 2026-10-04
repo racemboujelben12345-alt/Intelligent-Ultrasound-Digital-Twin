@@ -17,7 +17,8 @@ def test_unsupervised_ensemble_is_bounded_and_deterministic():
     b = engine.assess(X[0])
 
     assert 0.0 <= a.anomaly_score <= 1.0
-    assert 0.0 <= a.anomaly_probability <= 1.0
+    assert 0.0 <= a.anomaly_vote_rate <= 1.0
+    assert a.anomaly_probability == a.anomaly_vote_rate
     assert 0.0 <= a.confidence <= 1.0
     assert 0.0 <= a.ensemble_agreement <= 1.0
     assert a == b
@@ -76,3 +77,17 @@ def test_inference_record_is_traceable():
     assert record.task == "unsupervised_anomaly"
     assert len(record.input_hash) == 64
     assert 0.0 <= record.confidence <= 1.0
+
+
+def test_anomaly_evidence_is_calibrated_against_reference_population():
+    X = _reference()
+    engine = UltrasoundAIEngine(n_models=3, random_seeds=(11, 23, 37))
+    engine.fit_reference(X)
+
+    nominal = engine.assess(X[0])
+    degraded = engine.assess(X[0] + np.array([6.0] + [0.0] * 12))
+
+    assert 0.0 <= nominal.anomaly_score <= 1.0
+    assert 0.0 <= degraded.anomaly_score <= 1.0
+    assert degraded.anomaly_score >= nominal.anomaly_score
+    assert len(engine.reference_anomaly_scores) == len(X)
