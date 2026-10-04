@@ -7,7 +7,7 @@ from src.ai.intelligence import AIAnomalyAssessment
 def _ai(score=0.8, confidence=0.9):
     return AIAnomalyAssessment(
         anomaly_score=score,
-        anomaly_probability=0.7,
+        anomaly_vote_rate=0.7,
         confidence=confidence,
         ensemble_agreement=0.8,
         model_scores=(0.8, 0.82, 0.79),
