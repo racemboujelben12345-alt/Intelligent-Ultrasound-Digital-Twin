@@ -23,4 +23,6 @@ jobs:
         run: pytest -q
 
       - name: Run V&V audit
+        env:
+          PYTHONPATH: .
         run: python scripts/run_vv_audit.py --n 10
