@@ -17,3 +17,34 @@ Select nominal parents, generate severity levels, preserve parent IDs, use fixed
 
 ## Experimental experiment
 Acquire repeated nominal observations before controlled variation. Unsafe or unapproved physical perturbations are not performed; simulation is used instead.
+
+
+## Automated V&V gate
+
+The repository now provides a reproducible audit layer at
+`src/validation/audit.py` and a command-line runner at
+`scripts/run_vv_audit.py`.
+
+The audit checks:
+
+1. canonical acquisition contract;
+2. unique acquisition identifiers;
+3. complete simulation lineage;
+4. deterministic seeded simulation;
+5. non-trivial sensitivity to degradation severity;
+6. parent-family leakage between train and holdout.
+
+Example:
+
+```bash
+python scripts/run_vv_audit.py --n 10
+```
+
+### Interpretation rule
+
+A PASS means that the software/data-contract property was verified.
+It does **not** mean that a simulated degradation corresponds to a physical
+ultrasound-system failure.
+
+Physical validity still requires experimental reference measurements and
+device-specific validation.
