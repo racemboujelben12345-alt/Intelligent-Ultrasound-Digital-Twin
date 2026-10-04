@@ -74,14 +74,19 @@ class AIInferenceRecord:
 @dataclass(frozen=True)
 class AIAnomalyAssessment:
     anomaly_score: float
-    anomaly_probability: float
+    anomaly_vote_rate: float
     confidence: float
     ensemble_agreement: float
     model_scores: tuple[float, ...]
     state: str
 
+    @property
+    def anomaly_probability(self) -> float:
+        """Backward-compatible alias; this is a vote fraction, not a calibrated probability."""
+        return self.anomaly_vote_rate
+
     def validate(self) -> None:
-        values = (self.anomaly_score, self.anomaly_probability,
+        values = (self.anomaly_score, self.anomaly_vote_rate,
                   self.confidence, self.ensemble_agreement)
         if not all(np.isfinite(v) for v in values):
             raise ValueError("AI assessment contains non-finite values.")
@@ -361,7 +366,7 @@ class UltrasoundAIEngine:
             source=source,
             output=(
                 ("anomaly_score", assessment.anomaly_score),
-                ("anomaly_probability", assessment.anomaly_probability),
+                ("anomaly_vote_rate", assessment.anomaly_vote_rate),
                 ("ensemble_agreement", assessment.ensemble_agreement),
             ),
             confidence=assessment.confidence,
