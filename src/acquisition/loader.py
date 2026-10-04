@@ -338,7 +338,7 @@ def load_scan_a_acquisitions(
 
     metadata = load_metadata(metadata_path)
     metadata_by_file = {
-        str(row.get("file_path", "")).replace("\\\\", "/").lstrip("./"): row
+        str(row.get("file_path", "")).replace("\\", "/").lstrip("./"): row
         for row in metadata.values()
         if row.get("file_path")
     }
