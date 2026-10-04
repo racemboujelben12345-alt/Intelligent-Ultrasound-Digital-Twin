@@ -506,10 +506,9 @@ def run_pipeline() -> None:
         "## Architecture exécutée",
         "",
         (
-            "Acquisition → Digital Signature → "
-            "Baseline statistique → Calibration → "
-            "Détection d'anomalies → Digital Twin State → "
-            "Drift temporel → Analyse de tendance → Reporting"
+            "Acquisition → Digital Signature → Quality → "
+            "Statistical Baseline → AI Ensemble → Evidence Fusion → "
+            "Digital Twin State → Drift → Prediction → V&V → Reporting"
         ),
         "",
         "## Données",
@@ -533,7 +532,8 @@ def run_pipeline() -> None:
         ),
         (
             "- Variables de signature : "
-            f"{len(feature_names)}",
+            f"{len(feature_names)}"
+        ),
         "",
         "## AI intelligence",
         "",
@@ -543,8 +543,7 @@ def run_pipeline() -> None:
         f"- Fused intelligence score : {latest.fusion.fused_score:.4f}",
         f"- Fused confidence : {latest.fusion.confidence:.4f}",
         f"- Intelligence state : {latest.fusion.state}",
-        f"- Dominant AI feature : {latest.ai_feature_contributions[0][0] if latest.ai_feature_contributions else "N/A"}"
-        ),
+        f"- Dominant AI feature : {latest.ai_feature_contributions[0][0] if latest.ai_feature_contributions else 'N/A'}",
         "",
         "## Dernière acquisition analysée",
         "",
