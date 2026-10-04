@@ -17,12 +17,12 @@ st.markdown(
     """
     <style>
     .stApp { background:#f3f7fa; }
-    [data-testid="stHeader"] { background:transparent; }
-    .block-container { padding-top:.65rem; max-width:1500px; }
+    [data-testid="stHeader"] { background:#f3f7fa !important; height:0 !important; }\n    [data-testid="stToolbar"] { top:4px; }
+    .block-container { padding-top:0 !important; max-width:1500px; }
 
     /* Single clean navy header: intentionally no grey band above it. */
     .scan-header {
-        margin:-.65rem -3rem 1.15rem -3rem;
+        margin:0 -3rem 1.15rem -3rem;
         min-height:78px;
         padding:12px 34px;
         display:flex;
