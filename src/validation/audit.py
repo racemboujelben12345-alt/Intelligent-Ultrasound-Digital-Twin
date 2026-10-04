@@ -129,9 +129,10 @@ def verify_severity_response(
             float(np.mean(np.abs(outputs[i] - outputs[0])))
             for i in range(len(outputs))
         ]
-        non_trivial = all(delta >= -1e-12 for delta in deltas)
-        progressive = any(delta > 1e-5 for delta in deltas[1:])
-        passed = non_trivial and progressive
+        # Generic degradations are not required to be monotonic in every
+        # image metric. V&V checks measurable sensitivity instead.
+        measurable = [delta for delta in deltas[1:] if delta > 1e-5]
+        passed = bool(measurable)
         return AuditCheck(
             "severity_sensitivity",
             passed,
