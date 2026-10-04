@@ -176,6 +176,7 @@ class DigitalTwinAnalyzer:
         history: DigitalTwinHistory | None = None,
         drift_engine: DriftEngine | None = None,
         trend_engine: TemporalPredictionEngine | None = None,
+        ai_training_source: str = "baseline_reference",
     ) -> None:
 
         if not isinstance(
@@ -201,6 +202,7 @@ class DigitalTwinAnalyzer:
         self.ai_engine.fit_reference(
             baseline.X_reference,
             feature_names=baseline.feature_names,
+            training_source=ai_training_source,
         )
 
         self.drift_engine = drift_engine
