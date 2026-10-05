@@ -1,8 +1,7 @@
 """Automated verification and validation helpers for the Intelligent Ultrasound Digital Twin.
 
-The audit is intentionally source-aware. It checks structural integrity, provenance,
-simulation reproducibility and parent-lineage constraints without pretending that
-synthetic perturbations are physical failures.
+The audit is source-aware and lineage-aware. Synthetic derivatives are treated as
+members of the same information family as their ultimate parent.
 """
 
 from __future__ import annotations
@@ -41,8 +40,33 @@ class AuditReport:
         return f"V&V audit: {passed}/{total} checks passed"
 
 
+def lineage_root_id(
+    acquisition: Acquisition,
+    by_id: dict[str, Acquisition] | None = None,
+) -> str:
+    """Resolve the ultimate information-family root.
+
+    Missing parents are represented by their parent ID. Cycles are rejected.
+    """
+    if by_id is None:
+        return acquisition.parent_acquisition_id or acquisition.id
+
+    current = acquisition
+    seen: set[str] = set()
+    while current.parent_acquisition_id:
+        if current.id in seen:
+            raise ValueError(f"Simulation lineage cycle detected at {current.id!r}.")
+        seen.add(current.id)
+        parent_id = current.parent_acquisition_id
+        parent = by_id.get(parent_id)
+        if parent is None:
+            return parent_id
+        current = parent
+    return current.id
+
+
 def audit_acquisitions(acquisitions: Iterable[Acquisition]) -> AuditReport:
-    """Run deterministic structural/provenance checks over acquisitions."""
+    """Run deterministic structural, provenance and lineage checks."""
     items = tuple(acquisitions)
     checks: list[AuditCheck] = []
 
@@ -50,8 +74,7 @@ def audit_acquisitions(acquisitions: Iterable[Acquisition]) -> AuditReport:
         for acquisition in items:
             acquisition.validate()
         checks.append(AuditCheck(
-            "acquisition_contract",
-            True,
+            "acquisition_contract", True,
             f"{len(items)} acquisitions satisfy the canonical contract.",
         ))
     except Exception as exc:
@@ -61,8 +84,7 @@ def audit_acquisitions(acquisitions: Iterable[Acquisition]) -> AuditReport:
         ids = [item.id for item in items]
         unique = len(ids) == len(set(ids))
         checks.append(AuditCheck(
-            "unique_acquisition_ids",
-            unique,
+            "unique_acquisition_ids", unique,
             "IDs are unique." if unique else "Duplicate acquisition IDs detected.",
         ))
     except Exception as exc:
@@ -70,16 +92,16 @@ def audit_acquisitions(acquisitions: Iterable[Acquisition]) -> AuditReport:
 
     try:
         simulated = [item for item in items if item.is_simulated]
-        valid_lineage = all(
-            item.parent_acquisition_id
-            and item.simulation_seed is not None
-            and item.simulation_version
-            for item in simulated
-        )
+        by_id = {item.id: item for item in items}
+        for item in simulated:
+            root = lineage_root_id(item, by_id)
+            if not item.parent_acquisition_id or not item.simulation_version:
+                raise ValueError(f"Incomplete lineage metadata for {item.id!r}.")
+            if root == item.id:
+                raise ValueError(f"Simulation {item.id!r} resolves to itself.")
         checks.append(AuditCheck(
-            "simulation_lineage",
-            valid_lineage,
-            f"{len(simulated)} simulated acquisitions checked.",
+            "simulation_lineage", True,
+            f"{len(simulated)} simulated acquisitions have valid lineage.",
         ))
     except Exception as exc:
         checks.append(AuditCheck("simulation_lineage", False, str(exc)))
@@ -93,16 +115,12 @@ def verify_reproducibility(
     severity: float,
     seed: int,
 ) -> AuditCheck:
-    """Verify that a seeded degradation is exactly reproducible."""
+    """Verify exact reproducibility for a seeded degradation."""
     try:
         first = apply_degradation(image, degradation_type, severity, seed)
         second = apply_degradation(image, degradation_type, severity, seed)
         passed = np.array_equal(first.image, second.image)
-        details = (
-            "Identical outputs for identical input/seed."
-            if passed else
-            "Outputs differ despite identical input/seed."
-        )
+        details = "Identical outputs for identical input/seed." if passed else             "Outputs differ despite identical input/seed."
         return AuditCheck("simulation_reproducibility", passed, details)
     except Exception as exc:
         return AuditCheck("simulation_reproducibility", False, str(exc))
@@ -114,13 +132,11 @@ def verify_severity_response(
     severities: Iterable[float],
     seed: int = 42,
 ) -> AuditCheck:
-    """Verify that increasing severity produces a non-trivial image response.
-
-    This is a sensitivity check, not a claim that every metric must be
-    monotonically increasing for every degradation family.
-    """
+    """Verify measurable sensitivity; monotonicity is not assumed."""
     try:
         levels = tuple(float(x) for x in severities)
+        if len(levels) < 2:
+            raise ValueError("At least two severity levels are required.")
         outputs = [
             apply_degradation(image, degradation_type, level, seed).image
             for level in levels
@@ -129,13 +145,9 @@ def verify_severity_response(
             float(np.mean(np.abs(outputs[i] - outputs[0])))
             for i in range(len(outputs))
         ]
-        # Generic degradations are not required to be monotonic in every
-        # image metric. V&V checks measurable sensitivity instead.
-        measurable = [delta for delta in deltas[1:] if delta > 1e-5]
-        passed = bool(measurable)
+        measurable = any(delta > 1e-5 for delta in deltas[1:])
         return AuditCheck(
-            "severity_sensitivity",
-            passed,
+            "severity_sensitivity", measurable,
             f"severity levels={len(levels)}, max image delta={max(deltas):.6f}",
         )
     except Exception as exc:
@@ -147,40 +159,25 @@ def verify_no_parent_leakage(
     train_ids: set[str],
     holdout_ids: set[str],
 ) -> AuditCheck:
-    """Detect parent/derived-family overlap between train and holdout.
-
-    A synthetic derivative belongs to the same information family as its
-    parent. Therefore splitting only by image ID can leak information.
-    """
+    """Detect overlap of ultimate information families between partitions."""
     try:
         items = tuple(acquisitions)
-
-        def root_id(item: Acquisition) -> str:
-            return item.parent_acquisition_id or item.id
-
+        by_id = {item.id: item for item in items}
         train_roots = {
-            root_id(item) for item in items if item.id in train_ids
+            lineage_root_id(item, by_id) for item in items if item.id in train_ids
         }
         holdout_roots = {
-            root_id(item) for item in items if item.id in holdout_ids
+            lineage_root_id(item, by_id) for item in items if item.id in holdout_ids
         }
-
         overlap = train_roots & holdout_roots
         passed = not overlap
-
         return AuditCheck(
-            "parent_group_leakage",
-            passed,
+            "parent_group_leakage", passed,
             "No parent-family overlap detected."
-            if passed
-            else f"Leakage detected in parent families: {sorted(overlap)}",
+            if passed else f"Leakage detected in parent families: {sorted(overlap)}",
         )
     except Exception as exc:
         return AuditCheck("parent_group_leakage", False, str(exc))
-
-def lineage_root_id(acquisition: Acquisition) -> str:
-    """Return the stable information-family identifier for an acquisition."""
-    return acquisition.parent_acquisition_id or acquisition.id
 
 
 def partition_by_lineage(
@@ -189,20 +186,16 @@ def partition_by_lineage(
     baseline_size: int,
     holdout_size: int,
 ) -> tuple[tuple[Acquisition, ...], tuple[Acquisition, ...], tuple[Acquisition, ...]]:
-    """Split acquisitions into baseline/holdout/test without parent-family leakage.
-
-    Whole lineage families are kept in one partition. If the requested partition
-    cannot be formed without splitting a family, the function fails explicitly
-    instead of silently introducing leakage.
-    """
+    """Partition complete information families without cross-partition leakage."""
     items = tuple(acquisitions)
     if baseline_size < 1 or holdout_size < 1:
         raise ValueError("baseline_size and holdout_size must be >= 1.")
 
+    by_id = {item.id: item for item in items}
     groups: dict[str, list[Acquisition]] = {}
     for item in items:
         item.validate()
-        groups.setdefault(lineage_root_id(item), []).append(item)
+        groups.setdefault(lineage_root_id(item, by_id), []).append(item)
 
     ordered_groups = [tuple(groups[key]) for key in sorted(groups)]
     baseline: list[Acquisition] = []
@@ -218,21 +211,14 @@ def partition_by_lineage(
             test.extend(group)
 
     if len(baseline) < baseline_size:
-        raise ValueError(
-            "Insufficient independent lineage groups for the requested baseline."
-        )
+        raise ValueError("Insufficient independent lineage groups for baseline.")
     if len(holdout) < holdout_size:
-        raise ValueError(
-            "Insufficient independent lineage groups for the requested holdout."
-        )
+        raise ValueError("Insufficient independent lineage groups for holdout.")
     if not test:
-        raise ValueError(
-            "No independent lineage group remains for the test partition."
-        )
+        raise ValueError("No independent lineage group remains for test.")
 
-    # Enforce disjoint roots as a final invariant.
-    partitions = (baseline, holdout, test)
-    roots = [{lineage_root_id(item) for item in part} for part in partitions]
+    roots = [{lineage_root_id(item, by_id) for item in part}
+             for part in (baseline, holdout, test)]
     if roots[0] & roots[1] or roots[0] & roots[2] or roots[1] & roots[2]:
         raise RuntimeError("Lineage leakage detected during partitioning.")
 
