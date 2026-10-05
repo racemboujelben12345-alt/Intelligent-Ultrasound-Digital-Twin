@@ -274,14 +274,17 @@ def run_pipeline() -> None:
 
     results = []
 
-    for acquisition_id, image in zip(
-        test_ids,
-        test_images,
-    ):
+    for acquisition in test_acquisitions:
         result = analyzer.analyze(
-            image=image,
-            acquisition_id=acquisition_id,
-            source=source,
+            image=acquisition.image,
+            acquisition_id=acquisition.id,
+            source=acquisition.source,
+            provenance=acquisition.provenance,
+            timestamp=(
+                acquisition.timestamp.isoformat()
+                if hasattr(acquisition.timestamp, "isoformat")
+                else acquisition.timestamp
+            ),
             update_history=True,
             explain_top_k=5,
         )
