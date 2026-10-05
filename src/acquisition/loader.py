@@ -297,7 +297,7 @@ def generate_demo_acquisitions(
             truth_level=0.0,
             simulation_scenario="normal_reference",
             simulation_severity=0.0,
-            parent_acquisition_id="synthetic_root",
+            parent_acquisition_id=f"synthetic_root_{index:04d}",
             simulation_seed=seed + index,
             simulation_version="1.0",
         )
