@@ -177,3 +177,63 @@ def verify_no_parent_leakage(
         )
     except Exception as exc:
         return AuditCheck("parent_group_leakage", False, str(exc))
+
+def lineage_root_id(acquisition: Acquisition) -> str:
+    """Return the stable information-family identifier for an acquisition."""
+    return acquisition.parent_acquisition_id or acquisition.id
+
+
+def partition_by_lineage(
+    acquisitions: Iterable[Acquisition],
+    *,
+    baseline_size: int,
+    holdout_size: int,
+) -> tuple[tuple[Acquisition, ...], tuple[Acquisition, ...], tuple[Acquisition, ...]]:
+    """Split acquisitions into baseline/holdout/test without parent-family leakage.
+
+    Whole lineage families are kept in one partition. If the requested partition
+    cannot be formed without splitting a family, the function fails explicitly
+    instead of silently introducing leakage.
+    """
+    items = tuple(acquisitions)
+    if baseline_size < 1 or holdout_size < 1:
+        raise ValueError("baseline_size and holdout_size must be >= 1.")
+
+    groups: dict[str, list[Acquisition]] = {}
+    for item in items:
+        item.validate()
+        groups.setdefault(lineage_root_id(item), []).append(item)
+
+    ordered_groups = [tuple(groups[key]) for key in sorted(groups)]
+    baseline: list[Acquisition] = []
+    holdout: list[Acquisition] = []
+    test: list[Acquisition] = []
+
+    for group in ordered_groups:
+        if len(baseline) < baseline_size:
+            baseline.extend(group)
+        elif len(holdout) < holdout_size:
+            holdout.extend(group)
+        else:
+            test.extend(group)
+
+    if len(baseline) < baseline_size:
+        raise ValueError(
+            "Insufficient independent lineage groups for the requested baseline."
+        )
+    if len(holdout) < holdout_size:
+        raise ValueError(
+            "Insufficient independent lineage groups for the requested holdout."
+        )
+    if not test:
+        raise ValueError(
+            "No independent lineage group remains for the test partition."
+        )
+
+    # Enforce disjoint roots as a final invariant.
+    partitions = (baseline, holdout, test)
+    roots = [{lineage_root_id(item) for item in part} for part in partitions]
+    if roots[0] & roots[1] or roots[0] & roots[2] or roots[1] & roots[2]:
+        raise RuntimeError("Lineage leakage detected during partitioning.")
+
+    return tuple(baseline), tuple(holdout), tuple(test)
