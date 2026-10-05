@@ -1,4 +1,4 @@
-name: SCAN A Digital Twin CI
+name: Intelligent Ultrasound Digital Twin CI
 
 on:
   push:
