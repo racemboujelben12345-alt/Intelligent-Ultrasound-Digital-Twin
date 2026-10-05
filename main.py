@@ -369,6 +369,24 @@ def run_pipeline() -> None:
                 "twin_state_rationale":
                     result.twin_state.rationale,
 
+                "health_index":
+                    result.health.health_index,
+
+                "health_confidence":
+                    result.health.confidence_score,
+
+                "health_quality_component":
+                    result.health.quality_component,
+
+                "health_anomaly_component":
+                    result.health.anomaly_component,
+
+                "health_state":
+                    result.health.health_state,
+
+                "health_dominant_evidence":
+                    ", ".join(result.health.dominant_evidence),
+
                 "ai_top_feature":
                     result.ai_feature_contributions[0][0]
                     if result.ai_feature_contributions else None,
