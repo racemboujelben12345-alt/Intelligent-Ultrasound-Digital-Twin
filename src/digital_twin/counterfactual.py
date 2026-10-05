@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, asdict
 import numpy as np
 
-from src.image_analysis.digital_signature import DigitalSignature, build_digital_signature_from_image
+from src.image_analysis.digital_signature import FEATURE_ORDER, DigitalSignature, build_digital_signature_from_image
 from src.simulation.degradation import apply_degradation, DegradationType
 
 
@@ -36,7 +36,7 @@ def compare_signatures(
     a = observed.to_vector()
     b = counterfactual.to_vector()
     delta = b - a
-    names = tuple(observed.to_vector().shape and observed.numeric_values().keys())
+    names = FEATURE_ORDER
     changed = tuple(
         (name, float(value))
         for name, value in zip(names, delta)
@@ -66,13 +66,13 @@ def run_counterfactual(
     if not 0.0 <= float(severity) <= 1.0:
         raise ValueError("severity must be in [0, 1].")
 
-    rng = np.random.default_rng(seed)
-    counterfactual_image = apply_degradation(
+    result = apply_degradation(
         image,
         degradation_type,
         float(severity),
-        rng=rng,
+        seed=seed,
     )
+    counterfactual_image = result.image
     signature = build_digital_signature_from_image(
         counterfactual_image,
         source="simulated",
