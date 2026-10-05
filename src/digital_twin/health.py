@@ -14,6 +14,27 @@ HEALTH_STATES = ("NOMINAL", "WATCH", "EARLY_DRIFT", "HIGH_DEVIATION")
 
 
 @dataclass(frozen=True)
+class HealthModelConfig:
+    """Explicit configuration for the heuristic engineering-health mapping."""
+    quality_weight: float = 0.60
+    anomaly_weight: float = 0.40
+    nominal_min: float = 85.0
+    watch_min: float = 70.0
+    early_drift_min: float = 50.0
+    reference_distance: float = 3.0
+
+    def validate(self) -> None:
+        if self.quality_weight < 0 or self.anomaly_weight < 0:
+            raise ValueError("Health weights must be non-negative.")
+        if abs((self.quality_weight + self.anomaly_weight) - 1.0) > 1e-9:
+            raise ValueError("Health weights must sum to 1.")
+        if not (0 <= self.early_drift_min <= self.watch_min <= self.nominal_min <= 100):
+            raise ValueError("Health thresholds must be ordered and within [0,100].")
+        if self.reference_distance <= 0:
+            raise ValueError("reference_distance must be > 0.")
+
+
+@dataclass(frozen=True)
 class TwinHealthAssessment:
     """Transparent, bounded assessment of the current Digital Twin state."""
 
@@ -114,6 +135,7 @@ def assess_twin_health(
     expected_feature_count: int,
     provenance_score: float,
     reference_distance: float = 3.0,
+    model_config: HealthModelConfig | None = None,
 ) -> TwinHealthAssessment:
     """Build a transparent Digital Twin engineering-health assessment.
 
@@ -124,9 +146,11 @@ def assess_twin_health(
     if not isfinite(quality_score) or not 0.0 <= quality_score <= 100.0:
         raise ValueError("quality_score must be in [0, 100].")
 
+    config = model_config or HealthModelConfig(reference_distance=reference_distance)
+    config.validate()
     q = float(quality_score)
-    a = anomaly_component(mahalanobis_distance, reference_distance)
-    health = _clip(0.60 * q + 0.40 * a)
+    a = anomaly_component(mahalanobis_distance, config.reference_distance)
+    health = _clip(config.quality_weight * q + config.anomaly_weight * a)
 
     confidence = evidence_confidence(
         baseline_observations=baseline_observations,
@@ -135,11 +159,11 @@ def assess_twin_health(
         provenance_score=provenance_score,
     )
 
-    if health >= 85.0:
+    if health >= config.nominal_min:
         state = "NOMINAL"
-    elif health >= 70.0:
+    elif health >= config.watch_min:
         state = "WATCH"
-    elif health >= 50.0:
+    elif health >= config.early_drift_min:
         state = "EARLY_DRIFT"
     else:
         state = "HIGH_DEVIATION"
