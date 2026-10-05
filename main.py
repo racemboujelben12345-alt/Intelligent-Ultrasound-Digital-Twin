@@ -370,6 +370,15 @@ def run_pipeline() -> None:
                 "intelligence_state":
                     result.fusion.state,
 
+                "twin_state":
+                    result.twin_state.state,
+
+                "twin_state_confidence":
+                    result.twin_state.confidence,
+
+                "twin_state_rationale":
+                    result.twin_state.rationale,
+
                 "ai_top_feature":
                     result.ai_feature_contributions[0][0]
                     if result.ai_feature_contributions else None,
@@ -544,6 +553,9 @@ def run_pipeline() -> None:
         f"- Fused intelligence score : {latest.fusion.fused_score:.4f}",
         f"- Fused confidence : {latest.fusion.confidence:.4f}",
         f"- Intelligence state : {latest.fusion.state}",
+        f"- Unified Twin state : {latest.twin_state.state}",
+        f"- Twin state confidence : {latest.twin_state.confidence:.4f}",
+        f"- Twin state rationale : {latest.twin_state.rationale}",
         f"- Dominant AI feature : {latest.ai_feature_contributions[0][0] if latest.ai_feature_contributions else 'N/A'}",
         "",
         "## Dernière acquisition analysée",
