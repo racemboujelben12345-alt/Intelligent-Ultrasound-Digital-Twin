@@ -45,7 +45,7 @@ def fuse_intelligence(
     critical_threshold: float,
     quality_score: float,
     ai: AIAnomalyAssessment,
-    physical_evidence: float = 1.0,
+    physical_evidence: float = 0.0,
 ) -> IntelligenceFusion:
     """Fuse independent evidence streams with explicit contributions.
 
