@@ -330,7 +330,7 @@ class DigitalTwinAnalyzer:
         )
         causal_rank = rank_causal_evidence(
             np.asarray(vector, dtype=float)
-            - np.asarray(self.baseline.mean, dtype=float)
+            - np.asarray(self.baseline.mu, dtype=float)
         )
         top_causal = causal_rank[0] if causal_rank else None
         causal_score = float(top_causal.agreement_score) if top_causal else 0.0
