@@ -126,7 +126,7 @@ def run_pipeline() -> None:
     if len(acquisitions) < minimum_required:
         raise RuntimeError(
             "Nombre insuffisant d'acquisitions pour "
-            "exécuter le pipeline V3."
+            "exécuter le pipeline du Digital Twin."
         )
 
     source = acquisitions[0].source
@@ -606,14 +606,14 @@ def run_pipeline() -> None:
             "Les dégradations numériques utilisées pour "
             "la validation sont des simulations contrôlées "
             "et ne représentent pas des pannes réelles "
-            "du SCAN A."
+            "d'un équipement d'échographie."
         ),
         "",
         (
             "Les éventuelles données publiques sont "
             "utilisées comme données de référence et "
             "ne doivent pas être confondues avec les "
-            "acquisitions réelles du SCAN A."
+            "acquisitions expérimentales d'un équipement."
         ),
     ]
 
