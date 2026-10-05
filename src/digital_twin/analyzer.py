@@ -221,6 +221,7 @@ class DigitalTwinAnalyzer:
         source: str = "simulated",
         provenance: DataProvenance | None = None,
         timestamp: str | None = None,
+        params: dict | None = None,
         update_history: bool = True,
         explain_top_k: int = 5,
     ) -> TwinAnalysisResult:
@@ -275,6 +276,7 @@ class DigitalTwinAnalyzer:
         signature = build_digital_signature_from_image(
             image,
             source=source,
+            params=params,
         )
 
         vector = signature.to_vector()
@@ -313,6 +315,7 @@ class DigitalTwinAnalyzer:
             critical_threshold=self.baseline.thresholds["critical"],
             quality_score=state.quality_score,
             ai=ai,
+            physical_evidence=signature.physical_consistency_score,
         )
 
         # ============================================================
@@ -423,6 +426,7 @@ class DigitalTwinAnalyzer:
         ],
         *,
         source: str = "simulated",
+        params: dict | None = None,
         update_history: bool = True,
         explain_top_k: int = 5,
     ) -> tuple[TwinAnalysisResult, ...]:
@@ -443,6 +447,7 @@ class DigitalTwinAnalyzer:
                 image=image,
                 acquisition_id=acquisition_id,
                 source=source,
+                params=params,
                 update_history=update_history,
                 explain_top_k=explain_top_k,
             )
