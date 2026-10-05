@@ -203,3 +203,16 @@ ultrasound device.
 - `docs/TWIN_HEALTH_MODEL.md` — health/evidence model.
 - `docs/VALIDATION_MATRIX.md` — V&V strategy and evidence levels.
 - `docs/PROTOCOLE_EXPERIMENTAL.md` — experimental acquisition protocol.
+
+
+## Final V&V workflow
+
+The repository includes an integrated final audit combining software verification, controlled degradation checks, repeatability/noise-floor estimation, sensitivity analysis, and noise-aware robustness evaluation.
+
+Run:
+
+```bash
+python scripts/run_final_vv.py --n 10 --repeats 20 --seed 42
+```
+
+Outputs are written to `outputs/vv/`. A positive robustness margin means the simulated signature change exceeds the selected repeatability threshold; it is not proof of a physical SCAN A fault. See `docs/FINAL_VV_WORKFLOW.md` for the complete methodology.
