@@ -16,7 +16,7 @@ class EvidenceFusionResult:
     ai: float
     physics: float
     causal: float
-    counterfactual: float
+    counterfactual: float | None
     fusion_score: float
     disagreement: float
     confidence: float
@@ -31,7 +31,7 @@ def fuse_evidence(
     ai: float,
     physics: float,
     causal: float,
-    counterfactual: float,
+    counterfactual: float | None = None,
     weights: dict[str, float] | None = None,
 ) -> EvidenceFusionResult:
     """Fuse normalized evidence scores with a weighted mean and disagreement."""
@@ -40,25 +40,26 @@ def fuse_evidence(
         "ai": float(ai),
         "physics": float(physics),
         "causal": float(causal),
-        "counterfactual": float(counterfactual),
+        "counterfactual": (None if counterfactual is None else float(counterfactual)),
     }
-    if any(not math.isfinite(v) or not 0.0 <= v <= 1.0 for v in values.values()):
-        raise ValueError("All evidence scores must be finite and in [0,1].")
+    active = {k: v for k, v in values.items() if v is not None}
+    if any(not math.isfinite(v) or not 0.0 <= v <= 1.0 for v in active.values()):
+        raise ValueError("All active evidence scores must be finite and in [0,1].")
 
     if weights is None:
-        weights = {name: 1.0 for name in values}
-    if set(weights) != set(values):
+        weights = {name: 1.0 for name in active}
+    if set(weights) != set(active):
         raise ValueError("weights must contain exactly the five evidence sources.")
     if any(not math.isfinite(float(w)) or float(w) < 0 for w in weights.values()):
         raise ValueError("Weights must be finite and non-negative.")
 
-    total_weight = sum(float(w) for w in weights.values())
+    total_weight = sum(float(weights[k]) for k in active)
     if total_weight <= 0:
         raise ValueError("At least one evidence weight must be positive.")
 
-    fusion = sum(values[k] * float(weights[k]) for k in values) / total_weight
-    mean = sum(values.values()) / len(values)
-    variance = sum((v - mean) ** 2 for v in values.values()) / len(values)
+    fusion = sum(active[k] * float(weights[k]) for k in active) / total_weight
+    mean = sum(active.values()) / len(active)
+    variance = sum((v - mean) ** 2 for v in active.values()) / len(active)
     disagreement = min(1.0, math.sqrt(variance) * 2.0)
 
     # Confidence rises with evidence level and falls with disagreement.
