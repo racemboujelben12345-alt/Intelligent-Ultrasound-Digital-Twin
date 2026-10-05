@@ -67,3 +67,19 @@ class DataProvenance:
         if self.source in (DataSource.EXPERIMENTAL, DataSource.SCAN_A):
             return "experimental"
         return self.source.value
+
+
+def provenance_evidence_score(provenance: DataProvenance | None) -> float:
+    """Return a transparent source-maturity weight for engineering evidence.
+
+    This is an evidence-quality heuristic, not a probability and not a
+    statement about physical device health.
+    """
+    if provenance is None:
+        return 50.0
+    provenance.validate()
+    return {
+        "experimental": 100.0,
+        "public": 80.0,
+        "simulated": 60.0,
+    }[provenance.source_category]
