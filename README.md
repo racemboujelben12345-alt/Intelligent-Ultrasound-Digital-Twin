@@ -19,19 +19,17 @@ Quality Assessment
       ↓
 Statistical Baseline
       ↓
-Digital Twin State
-      ↓
-Controlled Degradation Simulation
+Statistical Anomaly Evidence
       ↓
 AI Ensemble Intelligence
       ↓
 Statistical + AI Evidence Fusion
       ↓
-Anomaly Detection
+Engineering Health + Temporal Drift
       ↓
-Drift / Trend Analysis
+Unified Twin State Engine
       ↓
-Prediction & Engineering Dashboard
+Prediction / V&V / Engineering Dashboard
 ```
 
 L'objectif n'est pas de diagnostiquer un patient ni de prouver automatiquement une panne matérielle. Le système fournit un cadre d'analyse et de surveillance de la qualité d'imagerie.
@@ -169,6 +167,8 @@ The current architecture treats AI as a governed engineering layer:
 - **Model governance:** model version, feature contract hash, training source, seeds and hyperparameters.
 - **Inference provenance:** acquisition ID, source, input hash and model version.
 - **Evidence fusion:** transparent combination of statistical deviation, AI evidence and quality, with a disagreement penalty.
+- **Unified Twin State:** one deterministic canonical state is produced from statistical, fusion, health and temporal evidence.
+- **Lineage-aware validation:** baseline, holdout and test partitions are separated by acquisition lineage to prevent parent/derivative leakage.
 - **Scientific guardrails:** AI evidence is never presented as proof of physical hardware failure or as a clinical diagnosis.
 
 ## Quality gates
