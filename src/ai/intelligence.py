@@ -98,10 +98,12 @@ class AIAnomalyAssessment:
 
 @dataclass(frozen=True)
 class AIPrediction:
+    """Prediction with an empirical ensemble-spread interval, not calibrated coverage."""
     prediction: float
     lower: float
     upper: float
     confidence: float
+    interval_method: str = "ensemble_empirical_p05_p95"
 
     def validate(self) -> None:
         if not all(np.isfinite(v) for v in
@@ -111,6 +113,8 @@ class AIPrediction:
             raise ValueError("Invalid prediction interval.")
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError("confidence must be in [0, 1].")
+        if self.interval_method != "ensemble_empirical_p05_p95":
+            raise ValueError("Unsupported interval_method.")
 
 
 def _hash_array(x: np.ndarray) -> str:
@@ -344,7 +348,7 @@ class UltrasoundAIEngine:
             model.fit(Xs, y)
             self.regressors.append(model)
         self._card("predictive_regression", len(X), training_source,
-                   {"n_trees": self.n_trees, "interval": "empirical_p05_p95"})
+                   {"n_trees": self.n_trees, "interval": "ensemble_empirical_p05_p95"})
         return self
 
     def predict_with_uncertainty(self, x: np.ndarray) -> AIPrediction:
@@ -360,7 +364,7 @@ class UltrasoundAIEngine:
         lower, upper = np.percentile(predictions, [5, 95])
         spread = float(np.std(predictions))
         confidence = float(np.clip(1.0 / (1.0 + spread), 0.0, 1.0))
-        result = AIPrediction(mean, float(lower), float(upper), confidence)
+        result = AIPrediction(mean, float(lower), float(upper), confidence, "ensemble_empirical_p05_p95")
         result.validate()
         return result
 
