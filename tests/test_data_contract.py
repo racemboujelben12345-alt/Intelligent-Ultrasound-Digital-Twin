@@ -1,3 +1,5 @@
+import pytest
+
 import numpy as np
 
 from src.acquisition.models import Acquisition
