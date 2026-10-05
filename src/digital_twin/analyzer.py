@@ -315,7 +315,7 @@ class DigitalTwinAnalyzer:
             critical_threshold=self.baseline.thresholds["critical"],
             quality_score=state.quality_score,
             ai=ai,
-            physical_evidence=signature.physical_consistency_score,
+            physical_evidence=1.0 - signature.physical_consistency_score,
         )
 
         # ============================================================
