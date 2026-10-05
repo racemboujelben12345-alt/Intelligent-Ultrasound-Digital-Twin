@@ -1,7 +1,11 @@
 import numpy as np
 
 from src.acquisition.models import Acquisition
-from src.acquisition.provenance import DataProvenance, DataSource
+from src.acquisition.provenance import (
+    DataProvenance,
+    DataSource,
+    provenance_evidence_score,
+)
 from src.simulation.degradation import DegradationType, apply_degradation
 
 
@@ -119,3 +123,27 @@ def test_lineage_aware_partition_rejects_unsplittable_family():
     )
     with pytest.raises(ValueError, match="independent lineage groups"):
         partition_by_lineage(items, baseline_size=4, holdout_size=2)
+
+
+def test_provenance_evidence_score_uses_canonical_category():
+    experimental = DataProvenance(
+        source=DataSource.EXPERIMENTAL,
+        dataset="exp",
+        relative_path="a.png",
+        is_experimental=True,
+    )
+    public = DataProvenance(
+        source=DataSource.PUBLIC,
+        dataset="pub",
+        relative_path="a.png",
+        is_public_reference=True,
+    )
+    simulated = DataProvenance(
+        source=DataSource.SIMULATED,
+        dataset="sim",
+        relative_path="a.png",
+        is_simulation=True,
+    )
+    assert provenance_evidence_score(experimental) == 100.0
+    assert provenance_evidence_score(public) == 80.0
+    assert provenance_evidence_score(simulated) == 60.0
