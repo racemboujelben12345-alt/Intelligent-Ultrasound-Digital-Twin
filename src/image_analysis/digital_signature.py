@@ -44,7 +44,7 @@ from .basic_metrics import (
 # VERSION
 # ============================================================
 
-SIGNATURE_VERSION = "2.0"
+SIGNATURE_VERSION = "2.1"
 
 
 # ============================================================
@@ -72,6 +72,9 @@ FEATURE_ORDER = (
     "depth_uniformity",
     "near_field_energy_ratio",
     "physical_consistency_score",
+    "theoretical_max_prf_hz",
+    "prf_depth_margin",
+    "metadata_complete",
 )
 
 
@@ -178,6 +181,9 @@ class DigitalSignature:
     depth_uniformity: float = 1.0
     near_field_energy_ratio: float = 0.5
     physical_consistency_score: float = 1.0
+    theoretical_max_prf_hz: float = 0.0
+    prf_depth_margin: float = 0.0
+    metadata_complete: float = 0.0
 
     # ========================================================
     # VALIDATION
@@ -272,6 +278,9 @@ class DigitalSignature:
             "depth_uniformity": float(self.depth_uniformity),
             "near_field_energy_ratio": float(self.near_field_energy_ratio),
             "physical_consistency_score": float(self.physical_consistency_score),
+            "theoretical_max_prf_hz": float(self.theoretical_max_prf_hz),
+            "prf_depth_margin": float(self.prf_depth_margin),
+            "metadata_complete": float(self.metadata_complete),
         }
 
     # ========================================================
@@ -460,6 +469,9 @@ def _build_signature_from_metrics(
         depth_uniformity=float(getattr(physics, "depth_uniformity", 1.0)),
         near_field_energy_ratio=float(getattr(physics, "near_field_energy_ratio", 0.5)),
         physical_consistency_score=float(getattr(physics, "physical_consistency_score", 1.0)),
+        theoretical_max_prf_hz=float(getattr(physics, "theoretical_max_prf_hz", 0.0) or 0.0),
+        prf_depth_margin=float(getattr(physics, "prf_depth_margin", 0.0) or 0.0),
+        metadata_complete=float(bool(getattr(physics, "metadata_complete", False))),
     )
 
     signature.validate()
