@@ -339,7 +339,7 @@ class DigitalTwinAnalyzer:
         evidence = fuse_evidence(
             statistical=statistical_evidence,
             ai=float(ai.anomaly_score),
-            physics=float(signature.physical_consistency_score),
+            physics=float(1.0 - signature.physical_consistency_score),
             causal=causal_score,
             counterfactual=None,
         )
