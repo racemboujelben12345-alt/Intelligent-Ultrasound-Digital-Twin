@@ -510,7 +510,7 @@ def load_public_acquisitions(
     """Load public ultrasound images while preserving public provenance.
 
     This loader intentionally treats the dataset as a reference imaging
-    source; it does not imply device-specific SCAN A behavior.
+    source; it does not imply device-specific equipment behavior.
     """
     root = PUBLIC_DATA_DIR if directory is None else Path(directory)
     if not root.exists():
