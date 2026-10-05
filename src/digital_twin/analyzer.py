@@ -44,6 +44,7 @@ from src.ai.intelligence import (
     UltrasoundAIEngine,
 )
 from src.ai.fusion import IntelligenceFusion, fuse_intelligence
+from src.acquisition.provenance import DataProvenance, provenance_evidence_score
 from src.anomaly.statistical import (
     AnomalyDetectionResult,
     StatisticalAnomalyDetector,
@@ -218,6 +219,7 @@ class DigitalTwinAnalyzer:
         image: np.ndarray,
         acquisition_id: str,
         source: str = "simulated",
+        provenance: DataProvenance | None = None,
         timestamp: str | None = None,
         update_history: bool = True,
         explain_top_k: int = 5,
@@ -250,6 +252,16 @@ class DigitalTwinAnalyzer:
             raise ValueError(
                 "acquisition_id ne peut pas être vide."
             )
+
+        if provenance is not None:
+            provenance.validate()
+            expected_category = (
+                "experimental" if source == "scan_a" else source
+            )
+            if provenance.source_category != expected_category:
+                raise ValueError(
+                    "Incohérence entre source d'analyse et provenance."
+                )
 
         if explain_top_k < 1:
             raise ValueError(
@@ -307,16 +319,15 @@ class DigitalTwinAnalyzer:
         # 5. Twin Health + Evidence Confidence
         # ============================================================
 
-        source_scores = {
-            "experimental": 100.0,
-            "public": 80.0,
-            "simulated": 60.0,
-            "scan_a": 100.0,
-        }
-        provenance_score = source_scores.get(
-            str(source).lower(),
-            50.0,
-        )
+        provenance_score = provenance_evidence_score(provenance)
+        if provenance is None:
+            # Legacy callers that only provide a source string remain supported.
+            provenance_score = {
+                "experimental": 100.0,
+                "public": 80.0,
+                "simulated": 60.0,
+                "scan_a": 100.0,
+            }.get(str(source).lower(), 50.0)
 
         health = assess_twin_health(
             quality_score=state.quality_score,
