@@ -2,7 +2,7 @@ name: Digital Twin V&V
 
 on:
   push:
-    branches: [main, refactor/ultrasound-digital-twin]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -11,15 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - name: Install dependencies
         run: pip install -r requirements.txt
-
-      - name: Run source-aware V&V audit
+      - name: Run final engineering V&V audit
         env:
           PYTHONPATH: .
-        run: python scripts/run_vv_audit.py --n 10
+        run: python scripts/run_final_vv.py --n 10 --repeats 20 --seed 42
+      - name: Upload V&V reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-vv-reports
+          path: outputs/vv/
+          if-no-files-found: warn
