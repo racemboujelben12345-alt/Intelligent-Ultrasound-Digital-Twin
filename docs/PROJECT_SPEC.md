@@ -12,7 +12,7 @@ It is deliberately not described as a complete physical replica of the hardware.
 - **Public:** development and methodological benchmarking.
 - **Synthetic:** controlled degradation with known ground truth.
 - **Experimental:** repeated acquisitions from a physical ultrasound system.
-- **Device-specific case study:** SCAN A or another named system, if available. The generic architecture remains unchanged.
+- **Device-specific validation:** a named ultrasound system may be introduced later as an experimental case study. The generic architecture remains unchanged.
 
 ## Twin state
 Each acquisition maps to a versioned feature vector. The twin produces normalized state, quality indicators, anomaly/deviation score, state label and temporal trend when a sequence exists.
