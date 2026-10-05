@@ -371,7 +371,7 @@ def load_experimental_acquisitions(
         )
 
         relative_path = str(path.relative_to(root)).replace("\\\\", "/")
-        fallback_id = f"scan_a_{index:04d}"
+        fallback_id = f"experimental_{index:04d}"
         row = metadata_by_file.get(relative_path, metadata.get(fallback_id, {}))
         acquisition_id = row.get("acquisition_id", fallback_id)
 
@@ -619,4 +619,5 @@ def get_acquisitions(
     )
 
 # Backward-compatible alias for legacy callers.
+# Deprecated: use load_experimental_acquisitions().
 load_scan_a_acquisitions = load_experimental_acquisitions
