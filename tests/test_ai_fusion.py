@@ -28,7 +28,7 @@ def test_fusion_is_bounded_and_exposes_contributions():
     assert np.isclose(
         result.fused_score,
         np.clip(
-            (0.45 * 0.8 + 0.40 * 0.8 + 0.15 * 0.3)
+            (0.35 * 0.8 + 0.35 * 0.8 + 0.15 * 0.3 + 0.15 * 0.0)
             * (0.75 + 0.25 * 1.0),
             0.0, 1.0,
         ),
