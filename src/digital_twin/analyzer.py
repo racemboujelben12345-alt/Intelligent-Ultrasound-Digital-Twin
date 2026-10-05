@@ -61,6 +61,7 @@ from src.digital_twin.history import (
 from src.digital_twin.state import (
     DigitalTwinState,
 )
+from src.digital_twin.state_engine import TwinStateDecision, decide_twin_state
 from src.drift.engine import (
     DriftAnalysis,
     DriftEngine,
@@ -108,6 +109,7 @@ class TwinAnalysisResult:
     ai: AIAnomalyAssessment
     fusion: IntelligenceFusion
     ai_feature_contributions: tuple[tuple[str, float], ...]
+    twin_state: TwinStateDecision
 
     def validate(self) -> None:
         self.detection.validate()
@@ -119,6 +121,7 @@ class TwinAnalysisResult:
             if not name or not np.isfinite(value) or value < 0.0:
                 raise ValueError("Invalid AI feature contribution.")
         self.explanation.validate()
+        self.twin_state.validate()
 
         if self.drift is not None:
             self.drift.validate()
@@ -374,6 +377,13 @@ class DigitalTwinAnalyzer:
         # 10. Complete result
         # ============================================================
 
+        twin_state = decide_twin_state(
+            statistical_state=state.state,
+            fusion=fusion,
+            health=health,
+            drift=drift,
+        )
+
         result = TwinAnalysisResult(
             signature=signature,
             detection=detection,
@@ -385,6 +395,7 @@ class DigitalTwinAnalyzer:
             ai=ai,
             fusion=fusion,
             ai_feature_contributions=ai_feature_contributions,
+            twin_state=twin_state,
         )
 
         result.validate()
