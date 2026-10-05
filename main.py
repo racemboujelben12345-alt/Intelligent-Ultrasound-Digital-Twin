@@ -115,6 +115,7 @@ def run_pipeline() -> None:
     acquisitions = get_acquisitions(
         prefer_experimental=True,
         minimum_experimental=C.MIN_BASELINE_ACQUISITIONS,
+        source_mode=C.ACQUISITION_SOURCE_MODE,
         demo_size=(
             C.MIN_TOTAL_ACQUISITIONS
             + 10
@@ -142,8 +143,14 @@ def run_pipeline() -> None:
         for acquisition in acquisitions
     ]
 
+    source_counts = {}
+    for acquisition in acquisitions:
+        source_counts[acquisition.source] = source_counts.get(acquisition.source, 0) + 1
+
+    print(f"SOURCE POLICY    : {C.ACQUISITION_SOURCE_MODE}")
     print(f"SOURCE           : {source}")
     print(f"ACQUISITIONS     : {len(acquisitions)}")
+    print(f"SOURCE COUNTS    : {source_counts}")
 
     # ==============================================================
     # 3. PARTITION DES DONNÉES
@@ -437,6 +444,8 @@ def run_pipeline() -> None:
             "project": PROJECT_NAME,
 
             "source": source,
+            "source_policy": C.ACQUISITION_SOURCE_MODE,
+            "source_counts": source_counts,
 
             "signature_version": C.SIGNATURE_VERSION,
             "pipeline_schema_version": C.PIPELINE_SCHEMA_VERSION,
