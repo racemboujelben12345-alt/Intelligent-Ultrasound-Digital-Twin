@@ -49,6 +49,8 @@ from src.anomaly.statistical import (
     AnomalyDetectionResult,
     StatisticalAnomalyDetector,
 )
+from src.digital_twin.evidence_fusion import fuse_evidence
+from src.physics.causal_evidence import rank_causal_evidence
 from src.digital_twin.factory import (
     build_twin_state_from_detection,
 )
@@ -290,17 +292,9 @@ class DigitalTwinAnalyzer:
         )
 
         # ============================================================
-        # 3. Digital Twin State
         # ============================================================
-
-        state = build_twin_state_from_detection(
-            acquisition_id=acquisition_id,
-            source=source,
-            vector=vector,
-            detection=detection,
-            baseline=self.baseline,
-            timestamp=timestamp,
-        )
+        # 3. AI Ensemble Intelligence
+        # ============================================================
 
         # ============================================================
         # 4. AI Ensemble Intelligence
@@ -317,6 +311,47 @@ class DigitalTwinAnalyzer:
             ai=ai,
             physical_evidence=1.0 - signature.physical_consistency_score,
         )
+
+
+        # ============================================================
+        # 5. Unified Evidence Fusion
+        # ============================================================
+
+        critical = float(self.baseline.thresholds["critical"])
+        statistical_evidence = float(np.clip(detection.d2 / max(critical, 1e-12), 0.0, 1.0))
+        causal_rank = rank_causal_evidence(
+            np.asarray(vector, dtype=float) - np.asarray(self.baseline.mean, dtype=float)
+        )
+        top_causal = causal_rank[0] if causal_rank else None
+        causal_score = float(top_causal.agreement_score) if top_causal else 0.0
+        causal_mechanism = str(top_causal.mechanism) if top_causal else ""
+
+        evidence = fuse_evidence(
+            statistical=statistical_evidence,
+            ai=float(ai.anomaly_score),
+            physics=float(signature.physical_consistency_score),
+            causal=causal_score,
+            counterfactual=None,
+        )
+
+        state = build_twin_state_from_detection(
+            acquisition_id=acquisition_id,
+            source=source,
+            vector=vector,
+            detection=detection,
+            baseline=self.baseline,
+            timestamp=timestamp,
+        )
+        state_dict = state.to_dict()
+        state_dict.update({
+            "physics_consistency_score": float(signature.physical_consistency_score),
+            "physics_metadata_completeness": float(signature.metadata_complete),
+            "evidence_fusion_score": float(evidence.fusion_score),
+            "evidence_disagreement": float(evidence.disagreement),
+            "causal_top_mechanism": causal_mechanism,
+            "causal_agreement_score": causal_score,
+        })
+        state = DigitalTwinState(**state_dict)
 
         # ============================================================
         # 5. Twin Health + Evidence Confidence
