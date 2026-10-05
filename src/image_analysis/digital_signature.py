@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Iterable
 
 import numpy as np
+from PIL import Image
 
 from src.physics.ultrasound import compute_ultrasound_physics
 
@@ -486,6 +487,7 @@ def _build_signature_from_metrics(
 def build_digital_signature(
     image_path: str | Path,
     source: str = "UNKNOWN",
+    params: dict | None = None,
 ) -> DigitalSignature:
     """
     Construit une DigitalSignature à partir d'une image
@@ -500,11 +502,14 @@ def build_digital_signature(
         )
 
     metrics = analyze_image(image_path)
+    image = np.asarray(Image.open(image_path).convert("L"), dtype=np.float64) / 255.0
+    physics = compute_ultrasound_physics(image, params=params)
 
     return _build_signature_from_metrics(
         metrics=metrics,
         source=source,
         image_path=str(image_path),
+        physics=physics,
     )
 
 
