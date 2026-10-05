@@ -372,6 +372,21 @@ def run_pipeline(*, source_mode: str | None = None, output_dir: Path | None = No
                 "physical_consistency_score":
                     result.signature.physical_consistency_score,
 
+                "physics_metadata_completeness":
+                    result.state.physics_metadata_completeness,
+
+                "evidence_fusion_score":
+                    result.state.evidence_fusion_score,
+
+                "evidence_disagreement":
+                    result.state.evidence_disagreement,
+
+                "causal_top_mechanism":
+                    result.state.causal_top_mechanism,
+
+                "causal_agreement_score":
+                    result.state.causal_agreement_score,
+
                 "wavelength_mm":
                     result.signature.wavelength_mm,
 
