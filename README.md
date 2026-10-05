@@ -44,6 +44,8 @@ Le pipeline distingue explicitement trois origines :
 
 Cette séparation empêche une donnée publique ou simulée d'être présentée comme une mesure spécifique d'un équipement physique.
 
+Dans ce projet, **SCAN A constitue la cible expérimentale privilégiée** pour les acquisitions et la validation physique lorsqu'elles sont disponibles. Les données publiques, notamment les datasets d'échographie utilisés pour le développement, restent des références externes et ne sont jamais présentées comme des acquisitions SCAN A.
+
 Des données provenant ultérieurement d'un équipement particulier peuvent être intégrées comme **cas expérimental / validation**, sans modifier le cœur du Digital Twin.
 
 ## Digital Signature
@@ -162,7 +164,7 @@ The current architecture treats AI as a governed engineering layer:
 
 - **Unsupervised anomaly ensemble:** multiple Isolation Forest models with seed diversity and agreement analysis.
 - **Supervised intelligence:** Random Forest classification for validated engineering states or controlled simulation classes.
-- **Predictive intelligence:** Random Forest regression ensemble with empirical P05/P95 uncertainty.
+- **Predictive intelligence:** Random Forest regression ensemble with an empirical P05/P95 **ensemble-spread interval**; this is not calibrated prediction-interval coverage.
 - **AI explainability:** leave-one-feature-out sensitivity ranking for the Digital Signature.
 - **Model governance:** model version, feature contract hash, training source, seeds and hyperparameters.
 - **Inference provenance:** acquisition ID, source, input hash and model version.
