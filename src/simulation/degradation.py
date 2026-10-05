@@ -1,5 +1,5 @@
 """
-SCAN A Digital Twin V2
+Intelligent Ultrasound Digital Twin
 ======================
 
 Controlled Image Degradation Engine
@@ -14,7 +14,7 @@ Important
 ---------
 Ces dégradations sont purement numériques.
 Elles ne représentent pas automatiquement une panne physique
-réelle du SCAN A.
+réelle d'un équipement d'échographie.
 
 Le module ne :
 - détecte pas les anomalies ;
