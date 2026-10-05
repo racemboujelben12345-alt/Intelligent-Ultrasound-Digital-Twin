@@ -46,26 +46,52 @@ def lineage_root_id(
 ) -> str:
     """Resolve the ultimate information-family root.
 
-    Missing parents are represented by their parent ID. Cycles are rejected.
+    A self-referencing parent ID represents a root acquisition and is not
+    considered a lineage cycle.
+
+    Missing parents are represented by their parent ID.
+    Genuine multi-acquisition cycles are rejected.
     """
     if by_id is None:
-        return acquisition.parent_acquisition_id or acquisition.id
+        parent_id = acquisition.parent_acquisition_id
+
+        if not parent_id or parent_id == acquisition.id:
+            return acquisition.id
+
+        return parent_id
 
     current = acquisition
     seen: set[str] = set()
+
     while current.parent_acquisition_id:
-        if current.id in seen:
-            raise ValueError(f"Simulation lineage cycle detected at {current.id!r}.")
-        seen.add(current.id)
         parent_id = current.parent_acquisition_id
+
+        # A self-reference identifies a root acquisition.
+        if parent_id == current.id:
+            return current.id
+
+        # Detect genuine lineage cycles.
+        if current.id in seen:
+            raise ValueError(
+                f"Simulation lineage cycle detected at {current.id!r}."
+            )
+
+        seen.add(current.id)
+
         parent = by_id.get(parent_id)
+
+        # Parent is not present in the current collection.
         if parent is None:
             return parent_id
+
         current = parent
+
     return current.id
 
 
-def audit_acquisitions(acquisitions: Iterable[Acquisition]) -> AuditReport:
+def audit_acquisitions(
+    acquisitions: Iterable[Acquisition],
+) -> AuditReport:
     """Run deterministic structural, provenance and lineage checks."""
     items = tuple(acquisitions)
     checks: list[AuditCheck] = []
@@ -73,38 +99,80 @@ def audit_acquisitions(acquisitions: Iterable[Acquisition]) -> AuditReport:
     try:
         for acquisition in items:
             acquisition.validate()
-        checks.append(AuditCheck(
-            "acquisition_contract", True,
-            f"{len(items)} acquisitions satisfy the canonical contract.",
-        ))
+
+        checks.append(
+            AuditCheck(
+                "acquisition_contract",
+                True,
+                f"{len(items)} acquisitions satisfy the canonical contract.",
+            )
+        )
     except Exception as exc:
-        checks.append(AuditCheck("acquisition_contract", False, str(exc)))
+        checks.append(
+            AuditCheck(
+                "acquisition_contract",
+                False,
+                str(exc),
+            )
+        )
 
     try:
         ids = [item.id for item in items]
         unique = len(ids) == len(set(ids))
-        checks.append(AuditCheck(
-            "unique_acquisition_ids", unique,
-            "IDs are unique." if unique else "Duplicate acquisition IDs detected.",
-        ))
+
+        checks.append(
+            AuditCheck(
+                "unique_acquisition_ids",
+                unique,
+                (
+                    "IDs are unique."
+                    if unique
+                    else "Duplicate acquisition IDs detected."
+                ),
+            )
+        )
     except Exception as exc:
-        checks.append(AuditCheck("unique_acquisition_ids", False, str(exc)))
+        checks.append(
+            AuditCheck(
+                "unique_acquisition_ids",
+                False,
+                str(exc),
+            )
+        )
 
     try:
         simulated = [item for item in items if item.is_simulated]
         by_id = {item.id: item for item in items}
+
         for item in simulated:
             root = lineage_root_id(item, by_id)
+
             if not item.parent_acquisition_id or not item.simulation_version:
-                raise ValueError(f"Incomplete lineage metadata for {item.id!r}.")
+                raise ValueError(
+                    f"Incomplete lineage metadata for {item.id!r}."
+                )
+
             if root == item.id:
-                raise ValueError(f"Simulation {item.id!r} resolves to itself.")
-        checks.append(AuditCheck(
-            "simulation_lineage", True,
-            f"{len(simulated)} simulated acquisitions have valid lineage.",
-        ))
+                raise ValueError(
+                    f"Simulation {item.id!r} resolves to itself."
+                )
+
+        checks.append(
+            AuditCheck(
+                "simulation_lineage",
+                True,
+                f"{len(simulated)} simulated acquisitions have valid lineage.",
+            )
+        )
+
     except Exception as exc:
-        checks.append(AuditCheck("simulation_lineage", False, str(exc)))
+        checks.append(
+            AuditCheck(
+                "simulation_lineage",
+                False,
+                str(exc),
+            )
+        )
 
     return AuditReport(tuple(checks))
 
@@ -117,13 +185,43 @@ def verify_reproducibility(
 ) -> AuditCheck:
     """Verify exact reproducibility for a seeded degradation."""
     try:
-        first = apply_degradation(image, degradation_type, severity, seed)
-        second = apply_degradation(image, degradation_type, severity, seed)
-        passed = np.array_equal(first.image, second.image)
-        details = "Identical outputs for identical input/seed." if passed else             "Outputs differ despite identical input/seed."
-        return AuditCheck("simulation_reproducibility", passed, details)
+        first = apply_degradation(
+            image,
+            degradation_type,
+            severity,
+            seed,
+        )
+
+        second = apply_degradation(
+            image,
+            degradation_type,
+            severity,
+            seed,
+        )
+
+        passed = np.array_equal(
+            first.image,
+            second.image,
+        )
+
+        details = (
+            "Identical outputs for identical input/seed."
+            if passed
+            else "Outputs differ despite identical input/seed."
+        )
+
+        return AuditCheck(
+            "simulation_reproducibility",
+            passed,
+            details,
+        )
+
     except Exception as exc:
-        return AuditCheck("simulation_reproducibility", False, str(exc))
+        return AuditCheck(
+            "simulation_reproducibility",
+            False,
+            str(exc),
+        )
 
 
 def verify_severity_response(
@@ -135,23 +233,51 @@ def verify_severity_response(
     """Verify measurable sensitivity; monotonicity is not assumed."""
     try:
         levels = tuple(float(x) for x in severities)
+
         if len(levels) < 2:
-            raise ValueError("At least two severity levels are required.")
+            raise ValueError(
+                "At least two severity levels are required."
+            )
+
         outputs = [
-            apply_degradation(image, degradation_type, level, seed).image
+            apply_degradation(
+                image,
+                degradation_type,
+                level,
+                seed,
+            ).image
             for level in levels
         ]
+
         deltas = [
-            float(np.mean(np.abs(outputs[i] - outputs[0])))
+            float(
+                np.mean(
+                    np.abs(outputs[i] - outputs[0])
+                )
+            )
             for i in range(len(outputs))
         ]
-        measurable = any(delta > 1e-5 for delta in deltas[1:])
-        return AuditCheck(
-            "severity_sensitivity", measurable,
-            f"severity levels={len(levels)}, max image delta={max(deltas):.6f}",
+
+        measurable = any(
+            delta > 1e-5
+            for delta in deltas[1:]
         )
+
+        return AuditCheck(
+            "severity_sensitivity",
+            measurable,
+            (
+                f"severity levels={len(levels)}, "
+                f"max image delta={max(deltas):.6f}"
+            ),
+        )
+
     except Exception as exc:
-        return AuditCheck("severity_sensitivity", False, str(exc))
+        return AuditCheck(
+            "severity_sensitivity",
+            False,
+            str(exc),
+        )
 
 
 def verify_no_parent_leakage(
@@ -163,21 +289,41 @@ def verify_no_parent_leakage(
     try:
         items = tuple(acquisitions)
         by_id = {item.id: item for item in items}
+
         train_roots = {
-            lineage_root_id(item, by_id) for item in items if item.id in train_ids
+            lineage_root_id(item, by_id)
+            for item in items
+            if item.id in train_ids
         }
+
         holdout_roots = {
-            lineage_root_id(item, by_id) for item in items if item.id in holdout_ids
+            lineage_root_id(item, by_id)
+            for item in items
+            if item.id in holdout_ids
         }
+
         overlap = train_roots & holdout_roots
         passed = not overlap
+
         return AuditCheck(
-            "parent_group_leakage", passed,
-            "No parent-family overlap detected."
-            if passed else f"Leakage detected in parent families: {sorted(overlap)}",
+            "parent_group_leakage",
+            passed,
+            (
+                "No parent-family overlap detected."
+                if passed
+                else (
+                    "Leakage detected in parent families: "
+                    f"{sorted(overlap)}"
+                )
+            ),
         )
+
     except Exception as exc:
-        return AuditCheck("parent_group_leakage", False, str(exc))
+        return AuditCheck(
+            "parent_group_leakage",
+            False,
+            str(exc),
+        )
 
 
 def partition_by_lineage(
@@ -185,19 +331,41 @@ def partition_by_lineage(
     *,
     baseline_size: int,
     holdout_size: int,
-) -> tuple[tuple[Acquisition, ...], tuple[Acquisition, ...], tuple[Acquisition, ...]]:
+) -> tuple[
+    tuple[Acquisition, ...],
+    tuple[Acquisition, ...],
+    tuple[Acquisition, ...],
+]:
     """Partition complete information families without cross-partition leakage."""
     items = tuple(acquisitions)
+
     if baseline_size < 1 or holdout_size < 1:
-        raise ValueError("baseline_size and holdout_size must be >= 1.")
+        raise ValueError(
+            "baseline_size and holdout_size must be >= 1."
+        )
 
     by_id = {item.id: item for item in items}
+
     groups: dict[str, list[Acquisition]] = {}
+
     for item in items:
         item.validate()
-        groups.setdefault(lineage_root_id(item, by_id), []).append(item)
 
-    ordered_groups = [tuple(groups[key]) for key in sorted(groups)]
+        root_id = lineage_root_id(
+            item,
+            by_id,
+        )
+
+        groups.setdefault(
+            root_id,
+            [],
+        ).append(item)
+
+    ordered_groups = [
+        tuple(groups[key])
+        for key in sorted(groups)
+    ]
+
     baseline: list[Acquisition] = []
     holdout: list[Acquisition] = []
     test: list[Acquisition] = []
@@ -205,21 +373,47 @@ def partition_by_lineage(
     for group in ordered_groups:
         if len(baseline) < baseline_size:
             baseline.extend(group)
+
         elif len(holdout) < holdout_size:
             holdout.extend(group)
+
         else:
             test.extend(group)
 
     if len(baseline) < baseline_size:
-        raise ValueError("Insufficient independent lineage groups for baseline.")
+        raise ValueError(
+            "Insufficient independent lineage groups for baseline."
+        )
+
     if len(holdout) < holdout_size:
-        raise ValueError("Insufficient independent lineage groups for holdout.")
+        raise ValueError(
+            "Insufficient independent lineage groups for holdout."
+        )
+
     if not test:
-        raise ValueError("No independent lineage group remains for test.")
+        raise ValueError(
+            "No independent lineage group remains for test."
+        )
 
-    roots = [{lineage_root_id(item, by_id) for item in part}
-             for part in (baseline, holdout, test)]
-    if roots[0] & roots[1] or roots[0] & roots[2] or roots[1] & roots[2]:
-        raise RuntimeError("Lineage leakage detected during partitioning.")
+    roots = [
+        {
+            lineage_root_id(item, by_id)
+            for item in part
+        }
+        for part in (baseline, holdout, test)
+    ]
 
-    return tuple(baseline), tuple(holdout), tuple(test)
+    if (
+        roots[0] & roots[1]
+        or roots[0] & roots[2]
+        or roots[1] & roots[2]
+    ):
+        raise RuntimeError(
+            "Lineage leakage detected during partitioning."
+        )
+
+    return (
+        tuple(baseline),
+        tuple(holdout),
+        tuple(test),
+    )
