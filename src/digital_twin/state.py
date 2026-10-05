@@ -88,8 +88,6 @@ class DigitalTwinState:
     mahalanobis_squared: float
 
     quality_score: float
-    physics_consistency_score: float = 1.0
-    physics_metadata_completeness: float = 0.0
 
     # --------------------------------------------------------
     # EXPLICATIONS PAR DIMENSION
@@ -107,10 +105,21 @@ class DigitalTwinState:
     ]
 
     # --------------------------------------------------------
+    # PHYSICS / FUSION EVIDENCE
+    # --------------------------------------------------------
+
+    physics_consistency_score: float = 1.0
+    physics_metadata_completeness: float = 0.0
+    evidence_fusion_score: float = 0.0
+    evidence_disagreement: float = 0.0
+    causal_top_mechanism: str = ""
+    causal_agreement_score: float = 0.0
+
+    # --------------------------------------------------------
     # VERSION
     # --------------------------------------------------------
 
-    state_version: str = "2.0"
+    state_version: str = "2.1"
 
     # ========================================================
     # VALIDATION
@@ -183,6 +192,15 @@ class DigitalTwinState:
 
         if not 0.0 <= self.physics_metadata_completeness <= 1.0:
             raise ValueError("physics_metadata_completeness must be in [0,1].")
+
+        if not 0.0 <= self.evidence_fusion_score <= 1.0:
+            raise ValueError("evidence_fusion_score must be in [0,1].")
+
+        if not 0.0 <= self.evidence_disagreement <= 1.0:
+            raise ValueError("evidence_disagreement must be in [0,1].")
+
+        if not 0.0 <= self.causal_agreement_score <= 1.0:
+            raise ValueError("causal_agreement_score must be in [0,1].")
 
         for name, value in (
             self.dimension_scores.items()
@@ -271,6 +289,10 @@ def build_twin_state(
     quality_score: float,
     physics_consistency_score: float = 1.0,
     physics_metadata_completeness: float = 0.0,
+    evidence_fusion_score: float = 0.0,
+    evidence_disagreement: float = 0.0,
+    causal_top_mechanism: str = "",
+    causal_agreement_score: float = 0.0,
     dimension_scores: Mapping[str, float] | None = None,
     feature_contributions: list[
         tuple[str, float]
@@ -341,6 +363,10 @@ def build_twin_state(
         ),
         physics_consistency_score=float(physics_consistency_score),
         physics_metadata_completeness=float(physics_metadata_completeness),
+        evidence_fusion_score=float(evidence_fusion_score),
+        evidence_disagreement=float(evidence_disagreement),
+        causal_top_mechanism=str(causal_top_mechanism),
+        causal_agreement_score=float(causal_agreement_score),
         dimension_scores={
             key: float(value)
             for key, value in dimension_scores.items()
