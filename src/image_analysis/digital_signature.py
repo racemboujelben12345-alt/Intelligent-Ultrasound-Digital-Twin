@@ -186,6 +186,11 @@ class DigitalSignature:
     prf_depth_margin: float = 0.0
     metadata_complete: float = 0.0
 
+    @property
+    def feature_names(self) -> tuple[str, ...]:
+        """Return the canonical ordered feature names used for vectorization."""
+        return tuple(FEATURE_ORDER)
+
     # ========================================================
     # VALIDATION
     # ========================================================
