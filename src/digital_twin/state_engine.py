@@ -102,13 +102,13 @@ def decide_twin_state(
 
     high = (
         statistical_state == "HIGH_DEVIATION"
-        or fusion.state == "HIGH_EVIDENCE"
         or health.health_state == "HIGH_DEVIATION"
     )
     early = (
         statistical_state in {"EARLY_DRIFT", "SIGNIFICANT_DRIFT"}
         or health.health_state == "EARLY_DRIFT"
         or (drift is not None and drift.persistent_drift_detected)
+        or fusion.state == "HIGH_EVIDENCE"
     )
     watch = (
         statistical_state not in {"NOMINAL"}
