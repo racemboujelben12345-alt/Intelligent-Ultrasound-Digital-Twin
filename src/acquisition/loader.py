@@ -113,7 +113,7 @@ def _phantom(
     Génère un phantom ultrasonore synthétique de démonstration.
 
     Cette image est exclusivement destinée aux tests.
-    Elle ne représente pas une acquisition acquisition expérimentale réellele.
+    Elle ne représente pas une acquisition expérimentale réelle.
     """
 
     rng = np.random.default_rng(
