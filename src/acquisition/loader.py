@@ -556,6 +556,7 @@ def load_acquisitions(
     minimum_public: int = 30,
     prefer_scan_a: bool | None = None,
     minimum_scan_a: int | None = None,
+    source_mode: str = "AUTO",
     demo_size: int = 50,
     seed: int = 42,
 ) -> tuple[Acquisition, ...]:
@@ -569,6 +570,23 @@ def load_acquisitions(
 
     Le fallback simulé est explicitement marqué SIMULATED.
     """
+
+    mode = str(source_mode).upper()
+    if mode not in {"AUTO", "EXPERIMENTAL", "PUBLIC", "SIMULATED"}:
+        raise ValueError("source_mode must be AUTO, EXPERIMENTAL, PUBLIC or SIMULATED.")
+
+    if mode == "EXPERIMENTAL":
+        experimental = load_experimental_acquisitions()
+        if not experimental:
+            raise RuntimeError("EXPERIMENTAL source requested but no experimental acquisitions were found.")
+        return experimental
+    if mode == "PUBLIC":
+        public = load_public_acquisitions()
+        if not public:
+            raise RuntimeError("PUBLIC source requested but no public acquisitions were found.")
+        return public
+    if mode == "SIMULATED":
+        return generate_demo_acquisitions(n_samples=demo_size, seed=seed)
 
     if prefer_scan_a is not None:
         prefer_experimental = prefer_scan_a
@@ -600,6 +618,7 @@ def get_acquisitions(
     minimum_public: int = 30,
     prefer_scan_a: bool | None = None,
     minimum_scan_a: int | None = None,
+    source_mode: str = "AUTO",
     demo_size: int = 50,
     seed: int = 42,
 ) -> tuple[Acquisition, ...]:
@@ -614,6 +633,7 @@ def get_acquisitions(
         minimum_public=minimum_public,
         prefer_scan_a=prefer_scan_a,
         minimum_scan_a=minimum_scan_a,
+        source_mode=source_mode,
         demo_size=demo_size,
         seed=seed,
     )
