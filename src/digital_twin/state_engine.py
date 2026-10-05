@@ -66,6 +66,10 @@ def decide_twin_state(
     fusion.validate()
     health.validate()
 
+    valid_statistical = {"NOMINAL", "EARLY_DRIFT", "SIGNIFICANT_DRIFT", "HIGH_DEVIATION"}
+    if statistical_state not in valid_statistical:
+        raise ValueError(f"Invalid statistical state: {statistical_state}")
+
     evidence: list[str] = [f"statistical:{statistical_state}"]
     rationale: list[str] = []
 
@@ -125,8 +129,13 @@ def decide_twin_state(
     confidence_terms = [fusion.confidence, health.confidence_score / 100.0]
     if drift is not None:
         confidence_terms.append(
-            1.0 if drift.persistent_drift_detected else 0.75
-            if drift.latest.status == "DRIFT_SIGNAL" else 0.5
+            (
+                1.0
+                if drift.persistent_drift_detected
+                else 0.75
+                if drift.latest.status == "DRIFT_SIGNAL"
+                else 0.5
+            )
         )
     confidence = float(np.clip(np.mean(confidence_terms), 0.0, 1.0))
 
