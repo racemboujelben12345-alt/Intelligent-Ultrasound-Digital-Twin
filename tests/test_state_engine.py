@@ -12,6 +12,7 @@ def _fusion(state="NOMINAL", score=0.2, confidence=0.9):
         statistical_evidence=score,
         ai_evidence=score,
         quality_evidence=0.1,
+        physical_evidence=0.0,
         agreement=0.9,
         state=state,
     )
