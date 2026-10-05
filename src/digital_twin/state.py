@@ -88,6 +88,8 @@ class DigitalTwinState:
     mahalanobis_squared: float
 
     quality_score: float
+    physics_consistency_score: float = 1.0
+    physics_metadata_completeness: float = 0.0
 
     # --------------------------------------------------------
     # EXPLICATIONS PAR DIMENSION
@@ -176,6 +178,12 @@ class DigitalTwinState:
                 "entre 0 et 100."
             )
 
+        if not 0.0 <= self.physics_consistency_score <= 1.0:
+            raise ValueError("physics_consistency_score must be in [0,1].")
+
+        if not 0.0 <= self.physics_metadata_completeness <= 1.0:
+            raise ValueError("physics_metadata_completeness must be in [0,1].")
+
         for name, value in (
             self.dimension_scores.items()
         ):
@@ -261,6 +269,8 @@ def build_twin_state(
     mahalanobis_distance: float,
     mahalanobis_squared: float,
     quality_score: float,
+    physics_consistency_score: float = 1.0,
+    physics_metadata_completeness: float = 0.0,
     dimension_scores: Mapping[str, float] | None = None,
     feature_contributions: list[
         tuple[str, float]
@@ -329,6 +339,8 @@ def build_twin_state(
         quality_score=float(
             quality_score
         ),
+        physics_consistency_score=float(physics_consistency_score),
+        physics_metadata_completeness=float(physics_metadata_completeness),
         dimension_scores={
             key: float(value)
             for key, value in dimension_scores.items()
