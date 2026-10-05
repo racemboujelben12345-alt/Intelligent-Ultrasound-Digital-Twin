@@ -293,6 +293,7 @@ def run_pipeline(*, source_mode: str | None = None, output_dir: Path | None = No
                 if hasattr(acquisition.timestamp, "isoformat")
                 else acquisition.timestamp
             ),
+            params=acquisition.params,
             update_history=True,
             explain_top_k=5,
         )
@@ -364,6 +365,24 @@ def run_pipeline(*, source_mode: str | None = None, output_dir: Path | None = No
 
                 "intelligence_confidence":
                     result.fusion.confidence,
+
+                "physical_evidence":
+                    result.fusion.physical_evidence,
+
+                "physical_consistency_score":
+                    result.signature.physical_consistency_score,
+
+                "wavelength_mm":
+                    result.signature.wavelength_mm,
+
+                "axial_resolution_mm":
+                    result.signature.axial_resolution_mm,
+
+                "attenuation_proxy_db_cm_mhz":
+                    result.signature.attenuation_proxy_db_cm_mhz,
+
+                "depth_uniformity":
+                    result.signature.depth_uniformity,
 
                 "intelligence_state":
                     result.fusion.state,
