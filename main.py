@@ -25,6 +25,7 @@ from src.reporting import (
     save_text,
 )
 from src.signature.baseline import StatisticalBaseline
+from src.validation.audit import partition_by_lineage
 
 
 PROJECT_NAME = C.PROJECT_NAME
@@ -148,32 +149,18 @@ def run_pipeline() -> None:
     # 3. PARTITION DES DONNÉES
     # ==============================================================
 
-    baseline_start = 0
-    baseline_end = C.BASELINE_SIZE
-
-    calibration_start = baseline_end
-    calibration_end = (
-        calibration_start
-        + C.HOLDOUT_SIZE
+    training_acquisitions, calibration_acquisitions, test_acquisitions = (
+        partition_by_lineage(
+            acquisitions,
+            baseline_size=C.BASELINE_SIZE,
+            holdout_size=C.HOLDOUT_SIZE,
+        )
     )
 
-    test_start = calibration_end
-
-    training_images = images[
-        baseline_start:baseline_end
-    ]
-
-    calibration_images = images[
-        calibration_start:calibration_end
-    ]
-
-    test_images = images[
-        test_start:
-    ]
-
-    test_ids = acquisition_ids[
-        test_start:
-    ]
+    training_images = [acquisition.image for acquisition in training_acquisitions]
+    calibration_images = [acquisition.image for acquisition in calibration_acquisitions]
+    test_images = [acquisition.image for acquisition in test_acquisitions]
+    test_ids = [acquisition.id for acquisition in test_acquisitions]
 
     if len(training_images) < C.BASELINE_SIZE:
         raise RuntimeError(
