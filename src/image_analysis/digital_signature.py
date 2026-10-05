@@ -32,6 +32,8 @@ from typing import Iterable
 
 import numpy as np
 
+from src.physics.ultrasound import compute_ultrasound_physics
+
 from .basic_metrics import (
     analyze_image,
     compute_basic_metrics,
@@ -63,6 +65,13 @@ FEATURE_ORDER = (
     "gradient_std",
     "gradient_max",
     "uniformity",
+    "wavelength_mm",
+    "axial_resolution_mm",
+    "attenuation_proxy_db_cm_mhz",
+    "axial_intensity_slope",
+    "depth_uniformity",
+    "near_field_energy_ratio",
+    "physical_consistency_score",
 )
 
 
@@ -162,6 +171,13 @@ class DigitalSignature:
     # --------------------------------------------------------
 
     signature_version: str = SIGNATURE_VERSION
+    wavelength_mm: float = 0.154
+    axial_resolution_mm: float = 0.077
+    attenuation_proxy_db_cm_mhz: float = 0.0
+    axial_intensity_slope: float = 0.0
+    depth_uniformity: float = 1.0
+    near_field_energy_ratio: float = 0.5
+    physical_consistency_score: float = 1.0
 
     # ========================================================
     # VALIDATION
@@ -249,6 +265,13 @@ class DigitalSignature:
             "gradient_std": float(self.gradient_std),
             "gradient_max": float(self.gradient_max),
             "uniformity": float(self.uniformity),
+            "wavelength_mm": float(self.wavelength_mm),
+            "axial_resolution_mm": float(self.axial_resolution_mm),
+            "attenuation_proxy_db_cm_mhz": float(self.attenuation_proxy_db_cm_mhz),
+            "axial_intensity_slope": float(self.axial_intensity_slope),
+            "depth_uniformity": float(self.depth_uniformity),
+            "near_field_energy_ratio": float(self.near_field_energy_ratio),
+            "physical_consistency_score": float(self.physical_consistency_score),
         }
 
     # ========================================================
@@ -323,6 +346,7 @@ def _build_signature_from_metrics(
     metrics: dict,
     source: str,
     image_path: str | None,
+    physics: object | None = None,
 ) -> DigitalSignature:
     """
     Fonction interne commune pour construire une DigitalSignature
@@ -429,6 +453,13 @@ def _build_signature_from_metrics(
         ),
 
         signature_version=SIGNATURE_VERSION,
+        wavelength_mm=float(getattr(physics, "wavelength_mm", 0.154)),
+        axial_resolution_mm=float(getattr(physics, "axial_resolution_mm", 0.077)),
+        attenuation_proxy_db_cm_mhz=float(getattr(physics, "attenuation_proxy_db_cm_mhz", 0.0)),
+        axial_intensity_slope=float(getattr(physics, "axial_intensity_slope", 0.0)),
+        depth_uniformity=float(getattr(physics, "depth_uniformity", 1.0)),
+        near_field_energy_ratio=float(getattr(physics, "near_field_energy_ratio", 0.5)),
+        physical_consistency_score=float(getattr(physics, "physical_consistency_score", 1.0)),
     )
 
     signature.validate()
@@ -473,6 +504,7 @@ def build_digital_signature_from_image(
     image: np.ndarray,
     source: str = "UNKNOWN",
     image_path: str | Path | None = None,
+    params: dict | None = None,
 ) -> DigitalSignature:
     """
     Construit une DigitalSignature directement à partir
@@ -521,6 +553,7 @@ def build_digital_signature_from_image(
         )
 
     metrics = compute_basic_metrics(image)
+    physics = compute_ultrasound_physics(image, params=params)
 
     return _build_signature_from_metrics(
         metrics=metrics,
@@ -530,6 +563,7 @@ def build_digital_signature_from_image(
             if image_path is not None
             else ""
         ),
+        physics=physics,
     )
 
 
