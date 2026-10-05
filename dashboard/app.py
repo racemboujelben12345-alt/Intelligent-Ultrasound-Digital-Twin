@@ -402,7 +402,8 @@ def safe_int(value, fallback=0):
 # ============================================================
 
 source = str(get_value("source", "unknown")).upper()
-state = str(get_value("state", "UNKNOWN")).upper()
+state = str(get_value("twin_state", get_value("state", "UNKNOWN"))).upper()
+statistical_state = str(get_value("state", "UNKNOWN")).upper()
 acq_id = str(get_value("acquisition_id", "—"))
 drift = str(get_value("drift_status", "—")).upper()
 
@@ -727,9 +728,15 @@ ai3.metric(
 )
 
 ai4.metric(
+    "Unified Twin state",
+    get_value("twin_state", "—"),
+    help="Canonical deterministic state from statistical, AI, quality and temporal evidence.",
     "Fusion state",
     get_value("intelligence_state", "—"),
-    help="Engineering evidence state, not a clinical or hardware-failure diagnosis.",
+    help="Intermediate engineering evidence state, not a clinical or hardware-failure diagnosis.",
+    "Statistical state",
+    statistical_state,
+    help="Instantaneous statistical deviation state before evidence fusion.",
 )
 
 
