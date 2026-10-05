@@ -73,3 +73,22 @@ def test_unified_state_is_conservative_with_persistent_drift():
     )
     assert decision.state == "EARLY_DRIFT"
     assert "persistent temporal drift detected" in decision.rationale
+
+
+def test_high_fusion_evidence_does_not_alone_claim_high_deviation():
+    health = assess_twin_health(
+        quality_score=100,
+        mahalanobis_distance=0.0,
+        baseline_observations=30,
+        feature_count=10,
+        expected_feature_count=10,
+        provenance_score=100,
+    )
+    decision = decide_twin_state(
+        statistical_state="NOMINAL",
+        fusion=_fusion("HIGH_EVIDENCE", 0.9, 0.9),
+        health=health,
+        drift=None,
+    )
+    assert decision.state == "EARLY_DRIFT"
+    assert decision.state != "HIGH_DEVIATION"
