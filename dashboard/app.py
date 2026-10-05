@@ -11,7 +11,8 @@ import math
 
 import pandas as pd
 import streamlit as st
-\nfrom src.digital_twin.health import assess_twin_health\n
+from src.digital_twin.health import assess_twin_health
+
 
 # ============================================================
 # PATHS
