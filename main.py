@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+import argparse
+import logging
+import time
 
 import numpy as np
 
@@ -29,6 +32,7 @@ from src.validation.audit import partition_by_lineage
 
 
 PROJECT_NAME = C.PROJECT_NAME
+LOGGER = logging.getLogger("ultrasound_digital_twin")
 
 
 def build_signature_matrix(
@@ -71,7 +75,7 @@ def build_signature_matrix(
     return X, feature_names
 
 
-def run_pipeline() -> None:
+def run_pipeline(*, source_mode: str | None = None, output_dir: Path | None = None, seed: int | None = None) -> dict:
     """
     Pipeline principal de l'Intelligent Ultrasound Digital Twin.
 
@@ -104,8 +108,8 @@ def run_pipeline() -> None:
     # 1. DOSSIER DE SORTIE
     # ==============================================================
 
-    output_dir = ensure_output_dir(
-        C.OUTPUT_DIR
+    effective_output_dir = ensure_output_dir(
+        output_dir if output_dir is not None else C.OUTPUT_DIR
     )
 
     # ==============================================================
@@ -115,12 +119,9 @@ def run_pipeline() -> None:
     acquisitions = get_acquisitions(
         prefer_experimental=True,
         minimum_experimental=C.MIN_BASELINE_ACQUISITIONS,
-        source_mode=C.ACQUISITION_SOURCE_MODE,
-        demo_size=(
-            C.MIN_TOTAL_ACQUISITIONS
-            + 10
-        ),
-        seed=C.RANDOM_SEED,
+        source_mode=(source_mode or C.ACQUISITION_SOURCE_MODE),
+        demo_size=(C.MIN_TOTAL_ACQUISITIONS + 10),
+        seed=(C.RANDOM_SEED if seed is None else seed),
     )
 
     minimum_required = C.MIN_TOTAL_ACQUISITIONS
@@ -402,7 +403,7 @@ def run_pipeline() -> None:
 
     save_csv(
         state_rows,
-        output_dir / "twin_states.csv",
+        effective_output_dir / "twin_states.csv",
     )
 
     # ==============================================================
@@ -430,7 +431,7 @@ def run_pipeline() -> None:
 
     save_csv(
         feature_rows,
-        output_dir / "features.csv",
+        effective_output_dir / "features.csv",
     )
 
     # ==============================================================
@@ -493,7 +494,7 @@ def run_pipeline() -> None:
                         calibration.percentiles,
                 },
         },
-        output_dir / "baseline.json",
+        effective_output_dir / "baseline.json",
     )
 
     # ==============================================================
@@ -520,7 +521,7 @@ def run_pipeline() -> None:
 
     save_json(
         summary,
-        output_dir / "summary.json",
+        effective_output_dir / "summary.json",
     )
 
     # ==============================================================
@@ -648,7 +649,7 @@ def run_pipeline() -> None:
 
     save_text(
         "\n".join(report_lines),
-        output_dir / "report.md",
+        effective_output_dir / "report.md",
     )
 
     # ==============================================================
@@ -684,13 +685,104 @@ def run_pipeline() -> None:
 
     print(
         f"OUTPUT DIRECTORY : "
-        f"{Path(output_dir).resolve()}"
+        f"{Path(effective_output_dir).resolve()}"
     )
 
     print("-" * 70)
     print("DIGITAL TWIN ULTRASOUND DIGITAL TWIN PIPELINE OK")
     print("=" * 70)
 
+    
+    return {
+        "project": PROJECT_NAME,
+        "source": source,
+        "acquisitions": len(acquisitions),
+        "baseline": len(training_images),
+        "calibration": len(calibration_images),
+        "test": len(test_images),
+        "latest_state": latest.state.state,
+        "latest_quality": latest.state.quality_score,
+        "output_dir": str(Path(effective_output_dir).resolve()),
+    }
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Run the Intelligent Ultrasound Digital Twin pipeline."
+    )
+    parser.add_argument("--source", choices=("AUTO", "EXPERIMENTAL", "PUBLIC", "SIMULATED"), default=None)
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--output", type=Path, default=None)
+    parser.add_argument("--baseline-size", type=int, default=None)
+    parser.add_argument("--holdout-size", type=int, default=None)
+    parser.add_argument("--version", action="version", version=f"%(prog)s {C.PROJECT_VERSION}")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if args.seed is not None:
+        C.RANDOM_SEED = args.seed
+    if args.baseline_size is not None:
+        if args.baseline_size < 2:
+            parser.error("--baseline-size must be >= 2")
+        C.BASELINE_SIZE = args.baseline_size
+    if args.holdout_size is not None:
+        if args.holdout_size < 1:
+            parser.error("--holdout-size must be >= 1")
+        C.HOLDOUT_SIZE = args.holdout_size
+
+    C.MIN_BASELINE_ACQUISITIONS = C.BASELINE_SIZE
+    C.MIN_HOLDOUT_ACQUISITIONS = C.HOLDOUT_SIZE
+    C.MIN_TOTAL_ACQUISITIONS = C.BASELINE_SIZE + C.HOLDOUT_SIZE + 1
+
+    started = time.perf_counter()
+    LOGGER.info("Starting %s v%s", PROJECT_NAME, C.PROJECT_VERSION)
+    LOGGER.info(
+        "source=%s seed=%s baseline=%d holdout=%d",
+        args.source or C.ACQUISITION_SOURCE_MODE,
+        C.RANDOM_SEED,
+        C.BASELINE_SIZE,
+        C.HOLDOUT_SIZE,
+    )
+
+    try:
+        result = run_pipeline(
+            source_mode=args.source,
+            output_dir=args.output,
+            seed=C.RANDOM_SEED,
+        )
+    except KeyboardInterrupt:
+        LOGGER.error("Execution interrupted by user.")
+        return 130
+    except Exception as exc:
+        elapsed = time.perf_counter() - started
+        LOGGER.error(
+            "Pipeline FAILED after %.2fs: %s: %s",
+            elapsed,
+            type(exc).__name__,
+            exc,
+        )
+        LOGGER.error(
+            "Check acquisition source, dataset availability, "
+            "baseline/holdout sizes and dependencies."
+        )
+        return 1
+
+    elapsed = time.perf_counter() - started
+    LOGGER.info(
+        "Pipeline completed successfully in %.2fs | state=%s | "
+        "quality=%.2f | output=%s",
+        elapsed,
+        result["latest_state"],
+        result["latest_quality"],
+        result["output_dir"],
+    )
+    return 0
+
 
 if __name__ == "__main__":
-    run_pipeline()
+    raise SystemExit(main())
