@@ -292,7 +292,20 @@ class DigitalTwinAnalyzer:
         )
 
         # ============================================================
-        # 3. AI Ensemble Intelligence
+        # 3. Initial Digital Twin State
+        # ============================================================
+
+        state = build_twin_state_from_detection(
+            acquisition_id=acquisition_id,
+            source=source,
+            vector=vector,
+            detection=detection,
+            baseline=self.baseline,
+            timestamp=timestamp,
+        )
+
+        # ============================================================
+        # 4. AI Ensemble Intelligence
         # ============================================================
 
         ai = self.ai_engine.assess(vector)
@@ -302,7 +315,7 @@ class DigitalTwinAnalyzer:
         fusion = fuse_intelligence(
             mahalanobis_squared=detection.d2,
             critical_threshold=self.baseline.thresholds["critical"],
-            quality_score=float(100.0),
+            quality_score=state.quality_score,
             ai=ai,
             physical_evidence=1.0 - signature.physical_consistency_score,
         )
@@ -331,14 +344,6 @@ class DigitalTwinAnalyzer:
             counterfactual=None,
         )
 
-        state = build_twin_state_from_detection(
-            acquisition_id=acquisition_id,
-            source=source,
-            vector=vector,
-            detection=detection,
-            baseline=self.baseline,
-            timestamp=timestamp,
-        )
         state_dict = state.to_dict()
         state_dict.update({
             "physics_consistency_score": float(signature.physical_consistency_score),
