@@ -21,6 +21,7 @@ class IntelligenceFusion:
     statistical_evidence: float
     ai_evidence: float
     quality_evidence: float
+    physical_evidence: float
     agreement: float
     state: str
 
@@ -28,7 +29,7 @@ class IntelligenceFusion:
         values = (
             self.fused_score, self.confidence,
             self.statistical_evidence, self.ai_evidence,
-            self.quality_evidence, self.agreement,
+            self.quality_evidence, self.physical_evidence, self.agreement,
         )
         if not all(np.isfinite(v) for v in values):
             raise ValueError("Fusion contains non-finite values.")
@@ -44,6 +45,7 @@ def fuse_intelligence(
     critical_threshold: float,
     quality_score: float,
     ai: AIAnomalyAssessment,
+    physical_evidence: float = 1.0,
 ) -> IntelligenceFusion:
     """Fuse independent evidence streams with explicit contributions.
 
@@ -57,6 +59,8 @@ def fuse_intelligence(
         raise ValueError("critical_threshold must be finite and > 0.")
     if not 0.0 <= quality_score <= 100.0:
         raise ValueError("quality_score must be in [0, 100].")
+    if not 0.0 <= physical_evidence <= 1.0:
+        raise ValueError("physical_evidence must be in [0, 1].")
 
     ai.validate()
     statistical = float(np.clip(mahalanobis_squared / critical_threshold, 0.0, 1.0))
@@ -68,9 +72,10 @@ def fuse_intelligence(
         0.0, 1.0,
     ))
     raw = (
-        0.45 * statistical
-        + 0.40 * ai_evidence
+        0.35 * statistical
+        + 0.35 * ai_evidence
         + 0.15 * quality_evidence
+        + 0.15 * float(physical_evidence)
     )
     confidence = float(np.clip(
         0.60 * ai.confidence + 0.40 * agreement,
@@ -89,6 +94,7 @@ def fuse_intelligence(
         statistical_evidence=statistical,
         ai_evidence=ai_evidence,
         quality_evidence=quality_evidence,
+        physical_evidence=float(physical_evidence),
         agreement=agreement,
         state=state,
     )
