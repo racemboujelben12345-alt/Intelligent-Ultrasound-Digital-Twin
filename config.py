@@ -12,7 +12,7 @@ EXPERIMENTAL_DATA_DIR = RAW_DIR / "experimental_ultrasound"
 PUBLIC_DATA_DIR = RAW_DIR / "public_ultrasound"
 DEMO_DATA_DIR = RAW_DIR / "demo_simulated"
 
-# Backward-compatible path alias for legacy experimental datasets.
+# Backward-compatible path alias retained for legacy callers.
 # New code should use EXPERIMENTAL_DATA_DIR.
 SCAN_A_DIR = EXPERIMENTAL_DATA_DIR
 
