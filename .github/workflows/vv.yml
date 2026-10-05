@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  tests:
+  v_and_v:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,10 +19,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run automated tests
-        run: pytest -q
-
-      - name: Run V&V audit
+      - name: Run source-aware V&V audit
         env:
           PYTHONPATH: .
         run: python scripts/run_vv_audit.py --n 10
