@@ -35,6 +35,10 @@ ALPHA_CRITICAL = 0.999
 
 RUN_MODE = "AUTO"
 
+# Acquisition source policy: AUTO | EXPERIMENTAL | PUBLIC | SIMULATED.
+# AUTO may fall back only when the preferred source is unavailable.
+ACQUISITION_SOURCE_MODE = "AUTO"
+
 PROJECT_NAME = "Intelligent Ultrasound Digital Twin"
 PROJECT_VERSION = "4.0"
 SIGNATURE_VERSION = "2.0"
