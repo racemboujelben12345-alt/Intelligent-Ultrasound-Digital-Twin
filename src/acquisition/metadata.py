@@ -1,8 +1,9 @@
-"""Metadata utilities for real ultrasound acquisition campaigns.
+"""Metadata utilities for traceable ultrasound acquisition campaigns.
 
-The metadata layer is intentionally separate from image loading. It lets the
-experimental campaign record device settings, session information and phase
-without changing the canonical Acquisition API.
+The metadata contract keeps scanner settings separate from image loading while
+capturing the physical parameters needed by the physics-informed Digital Twin.
+Device-specific fields are optional because the exact SCAN A interface must be
+measured/documented during the experimental campaign.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from typing import Any
 
 
 REQUIRED_COLUMNS = {"acquisition_id"}
+
 OPTIONAL_COLUMNS = {
     "session_id",
     "timestamp",
@@ -21,17 +23,24 @@ OPTIONAL_COLUMNS = {
     "device_id",
     "probe_id",
     "preset",
+    "mode",
     "frequency",
     "gain",
     "depth",
     "focus",
+    "tgc",
+    "dynamic_range",
+    "pulse_duration_us",
+    "prf_hz",
+    "sound_speed_m_s",
+    "output_power",
+    "velocity_scale",
+    "roi",
     "target_id",
     "operator_id",
     "notes",
     "file_path",
     "file_format",
-    "tgc",
-    "dynamic_range",
     "dimensions",
     "bit_depth",
     "frame_count",
@@ -51,6 +60,7 @@ def load_metadata(path: Path | None) -> dict[str, dict[str, Any]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
         columns = set(reader.fieldnames or [])
+
         missing = REQUIRED_COLUMNS - columns
         if missing:
             raise ValueError(
@@ -66,10 +76,12 @@ def load_metadata(path: Path | None) -> dict[str, dict[str, Any]]:
             )
 
         rows: dict[str, dict[str, Any]] = {}
+
         for row in reader:
             acquisition_id = (row.get("acquisition_id") or "").strip()
             if not acquisition_id:
                 raise ValueError("Every metadata row needs acquisition_id.")
+
             if acquisition_id in rows:
                 raise ValueError(
                     f"Duplicate acquisition_id in metadata: {acquisition_id}"
@@ -92,7 +104,20 @@ def load_metadata(path: Path | None) -> dict[str, dict[str, Any]]:
                         f"{clean['timestamp']}"
                     ) from exc
 
-            for key in ("frequency", "gain", "depth", "focus", "dynamic_range"):
+            numeric_float_fields = (
+                "frequency",
+                "gain",
+                "depth",
+                "focus",
+                "dynamic_range",
+                "pulse_duration_us",
+                "prf_hz",
+                "sound_speed_m_s",
+                "output_power",
+                "velocity_scale",
+            )
+
+            for key in numeric_float_fields:
                 if key in clean:
                     try:
                         clean[key] = float(clean[key])
