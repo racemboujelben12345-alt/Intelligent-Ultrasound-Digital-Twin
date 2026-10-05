@@ -292,12 +292,7 @@ class DigitalTwinAnalyzer:
         )
 
         # ============================================================
-        # ============================================================
         # 3. AI Ensemble Intelligence
-        # ============================================================
-
-        # ============================================================
-        # 4. AI Ensemble Intelligence
         # ============================================================
 
         ai = self.ai_engine.assess(vector)
@@ -307,20 +302,22 @@ class DigitalTwinAnalyzer:
         fusion = fuse_intelligence(
             mahalanobis_squared=detection.d2,
             critical_threshold=self.baseline.thresholds["critical"],
-            quality_score=state.quality_score,
+            quality_score=float(100.0),
             ai=ai,
             physical_evidence=1.0 - signature.physical_consistency_score,
         )
 
-
         # ============================================================
-        # 5. Unified Evidence Fusion
+        # 4. Unified Evidence Fusion
         # ============================================================
 
         critical = float(self.baseline.thresholds["critical"])
-        statistical_evidence = float(np.clip(detection.d2 / max(critical, 1e-12), 0.0, 1.0))
+        statistical_evidence = float(
+            np.clip(detection.d2 / max(critical, 1e-12), 0.0, 1.0)
+        )
         causal_rank = rank_causal_evidence(
-            np.asarray(vector, dtype=float) - np.asarray(self.baseline.mean, dtype=float)
+            np.asarray(vector, dtype=float)
+            - np.asarray(self.baseline.mean, dtype=float)
         )
         top_causal = causal_rank[0] if causal_rank else None
         causal_score = float(top_causal.agreement_score) if top_causal else 0.0
