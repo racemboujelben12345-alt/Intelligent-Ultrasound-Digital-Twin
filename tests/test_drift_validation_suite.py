@@ -18,7 +18,7 @@ def test_grid_is_reproducible_and_aggregates_scenario_families():
     assert [item.scenario_name for item in first.aggregates] == [
         "nominal", "gradual_drift", "abrupt_shift", "noisy_nominal"
     ]
-    assert len(first.trial_metrics) == 2 + 2 + 4 + 2
+    assert len(first.trial_metrics) == 2 + 4 + 4 + 2
     assert all(0.0 <= item.detection_rate <= 1.0 for item in first.aggregates)
     assert all(0.0 <= item.mean_false_alarm_fraction <= 1.0 for item in first.aggregates)
 
