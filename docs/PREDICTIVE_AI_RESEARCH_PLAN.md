@@ -244,3 +244,17 @@ shift. This is a synthetic software-validation protocol only; it does not
 validate ultrasound hardware, acoustic physics, clinical utility, or failure
 prediction. For physical claims, repeat the protocol on authorized, traceable
 acquisitions with independent sessions and a pre-registered operating target.
+
+
+### Confidence-aware threshold selection
+
+The nominal calibration helper reports a Wilson confidence interval for each
+candidate's sequence-level false-alarm proportion. A candidate is eligible
+only when the **upper confidence bound**, not just the observed point estimate,
+is at or below the pre-specified target. This helps expose the uncertainty
+caused by small calibration samples. The interval relies on independent
+sequence-level Bernoulli outcomes and should not be interpreted as a guarantee
+under temporal dependence or domain shift. If no candidate qualifies, collect
+more independent nominal sequences or revise the operating target and candidate
+grid before inspecting the independent evaluation results. Do not tune against
+the evaluation set.
