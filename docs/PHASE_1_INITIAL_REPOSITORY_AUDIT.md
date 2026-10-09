@@ -1,7 +1,7 @@
 # Phase 1 — Initial repository audit
 
 **Status:** static source/documentation audit; not a complete execution audit.  
-**Scope:** inspected the main branch after PR #16. Tests, CI workflows and the full runtime pipeline have not been executed as part of this document.
+**Scope:** inspected selected source files and documentation on `main` after PR #16, then checked the GitHub Actions runs associated with this audit PR commit. The CI unit/integration-test job and final V&V job both completed successfully on commit `1724396219e4d3324fb73680f45a527d1f26bfac`. This is evidence of those configured checks passing on that commit, not a complete line-by-line audit or physical-device validation.
 
 ## 1. Scientific evidence levels
 
@@ -58,7 +58,7 @@ A code path or passing unit test must not be described as experimental validatio
 
 | Project phase | Initial audit assessment | Exit criterion |
 |---|---|---|
-| Phase 0 — Stabilization | PR #1 is merged in the repository history, but merge status alone does not prove current CI is green. | Inspect the latest CI run; tests, compile check and diff checks pass. |
+| Phase 0 — Stabilization | GitHub Actions reports the configured unit/integration-test job and final engineering V&V job succeeded on audit commit `1724396219e4d3324fb73680f45a527d1f26bfac`. | Confirm those checks are the required gates for the current project; separately verify whether `compileall` and `git diff --check` are configured/executed, since their execution is not established by the job summaries retrieved. |
 | Phase 1 — Repository audit | **Started; not complete.** This document is a static first pass, not a line-by-line audit of every module. | Complete module inventory, run tests/V&V, reconcile claims and publish prioritized issues. |
 | Phase 2 — Data contract and quality | Contract and audit components exist. | Reproducible data-quality report with source counts, duplicates, missing metadata and lineage-leakage checks. |
 | Phase 3 — Features and signal behaviour | Signature, physics and edge-feature modules exist; PR #16 adds one robustness analysis. | Versioned feature catalogue and controlled sensitivity/redundancy report. |
@@ -67,7 +67,7 @@ A code path or passing unit test must not be described as experimental validatio
 
 ## 5. Recommended next actions
 
-1. Run the current CI and V&V commands; record actual results rather than assuming success from merged PRs.
+1. CI and final V&V were confirmed successful for the current audit commit. Next, inspect the workflow definitions and logs to verify exact test coverage and whether `compileall` and `git diff --check` are included.
 2. Reconcile the Digital Signature feature schema (23 vs 13 vs 11) and add a test that the documented schema matches the produced vector.
 3. Finish the module-by-module audit, including AI, drift, prediction, explainability, metadata/provenance, tests and workflows.
 4. Generate a source-aware data inventory and verify lineage-safe partitions.
