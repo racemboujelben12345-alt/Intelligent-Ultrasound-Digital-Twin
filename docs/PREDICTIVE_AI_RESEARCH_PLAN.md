@@ -191,3 +191,28 @@ a validated acoustic or scanner physics simulator. It does not establish
 physical repeatability, device-fault prediction, clinical utility or real-world
 false-alarm performance. Keep simulated outcomes separate from public-data
 experiments and authorized physical acquisitions.
+
+
+## Repeated synthetic drift evaluation grid
+
+`src/validation/drift_validation_suite.py` runs the existing monitor across a
+pre-specified grid of scenario families, random seeds, noise levels and drift
+magnitudes. It reports per-trial metrics plus per-family detection rate, mean
+false-alarm observation fraction, and mean/median detection delay among detected
+trials. The report records the seeds and fixed monitor parameters for
+reproducibility and JSON-friendly export.
+
+The monitor thresholds are held fixed throughout one grid; this helper does
+not optimize them on the evaluation scenarios. If threshold calibration is
+introduced later, use a separate calibration set of nominal scenarios, freeze
+the thresholds, and evaluate on independent seeds/scenarios. Include missed
+changes and false alarms, not only detected changes. Detection delay is
+conditional on detection and therefore must be interpreted alongside detection
+rate. The false-alarm fraction is per observation, not per hour or per session.
+
+The grid is a software-level robustness study on simplified synthetic
+sequences. It is not a calibrated physical model of ultrasound propagation,
+scanner electronics, probe wear, or acoustic phantoms. It cannot establish
+physical repeatability, real-world alarm burden, clinical utility, or
+hardware-failure prediction. Keep its results separate from public-image
+experiments and traceable physical acquisitions.
