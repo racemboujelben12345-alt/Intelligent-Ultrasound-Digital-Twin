@@ -101,7 +101,7 @@ def analyze_experimental_repeatability(
         eligible = [matrix[idx] for idx in groups.values() if len(idx) >= 2]
         if len(groups) >= 2 and len(eligible) == len(groups):
             session_stds = np.asarray([group.std(axis=0, ddof=1) for group in eligible])
-            session_means = np.asarray([group.mean(axis=0) for group in groups.values()])
+            session_means = np.asarray([matrix[idx].mean(axis=0) for idx in groups.values()])
             within_session_std_mean = float(session_stds.mean())
             between_session_mean_range = float(np.mean(np.ptp(session_means, axis=0)))
 
