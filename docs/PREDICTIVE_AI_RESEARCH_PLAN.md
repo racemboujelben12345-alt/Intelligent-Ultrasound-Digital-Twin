@@ -162,3 +162,32 @@ These methods are deliberately transparent baselines. They should first be exerc
 Within each series, the report checks that candidate models share the same target indices, actual values, horizon, step and persistence predictions. It then reports per-series MAE/RMSE/MASE, relative MAE to persistence where the persistence error is non-zero, and wins/ties/losses against persistence. The primary cross-series summary is the macro mean of per-series relative MAE, so a high-magnitude feature does not dominate simply because of its units. Raw MAE/RMSE summaries are descriptive and should not be used to rank models across differently scaled features.
 
 This helper does not validate provenance, infer acquisition order, or split sessions/devices. The caller must provide independent, comparable ordered sequences and avoid leakage from related acquisitions. Report the number of series and per-series results alongside any aggregate; a macro score from a small or homogeneous set is not evidence of generalization. A zero-error persistence baseline has no defined relative-error ratio and is counted as a tie when the candidate is equally accurate.
+
+
+## Controlled synthetic drift validation
+
+`src/validation/synthetic_drift_scenarios.py` provides deterministic,
+seeded one-dimensional scenarios for checking the current EWMA/CUSUM monitor:
+
+- **nominal**: stable observations without a known change point;
+- **gradual_drift**: a gradual positive shift starting at a known index;
+- **abrupt_shift**: a step change at a known index;
+- **noisy_nominal**: nominal mean with increased noise, to probe sensitivity
+  to variability changes.
+
+`run_synthetic_drift_validation(...)` returns the sequential monitor output
+and metrics. The report includes alarm count, false-alarm observation fraction
+before the change (or across the full sequence when no change is specified),
+whether an alarm occurred at or after the change, and detection delay in
+observations. The false-alarm fraction is not a calibrated per-hour rate; a
+real-time rate requires timestamps and a defined exposure period. Thresholds
+must be pre-specified or calibrated on separate nominal scenarios, not tuned
+on the same evaluation scenarios.
+
+Use multiple seeds and vary noise, drift magnitude, onset and optional
+seasonality before drawing conclusions. Report missed changes and false alarms,
+not only successful detections. The generator is a software test fixture, not
+a validated acoustic or scanner physics simulator. It does not establish
+physical repeatability, device-fault prediction, clinical utility or real-world
+false-alarm performance. Keep simulated outcomes separate from public-data
+experiments and authorized physical acquisitions.
