@@ -13,6 +13,7 @@ from src.prediction.forecasting_evaluation import (
     Forecaster,
     RollingOriginEvaluation,
     evaluate_rolling_origin,
+    persistence_forecaster,
 )
 
 def _history(history: np.ndarray, horizon: int) -> tuple[np.ndarray, int]:
@@ -83,9 +84,7 @@ def compare_baseline_forecasters(
     trailing moving average, simple exponential smoothing and linear trend.
     """
     forecasters: dict[str, Forecaster] = {
-        "persistence": lambda history, steps: np.full(
-            steps, float(history[-1]), dtype=float
-        ),
+        "persistence": persistence_forecaster,
         f"moving_average_{int(moving_average_window)}": moving_average_forecaster(
             moving_average_window
         ),
