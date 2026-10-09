@@ -1,3 +1,6 @@
+import json
+
+import cv2
 import numpy as np
 import pytest
 
@@ -13,10 +16,10 @@ def _image():
 
 def test_report_is_json_friendly_and_separates_variants():
     image = _image()
-    blurred = np.asarray(image, dtype=np.float32)
+    # The edge pipeline accepts float images only in [0, 1].
+    normalized = image.astype(np.float32) / 255.0
     # A deterministic digital transformation, not physical acquisition.
-    import cv2
-    blurred = cv2.GaussianBlur(blurred, (3, 3), 0)
+    blurred = cv2.GaussianBlur(normalized, (3, 3), 0)
 
     report = evaluate_edge_metric_sensitivity(
         image, {"blur_3x3": blurred, "identity": image.copy()}
@@ -29,7 +32,6 @@ def test_report_is_json_friendly_and_separates_variants():
         "edge_density_adaptive_median_canny",
         "edge_density_gradient_p90",
     }
-    import json
     json.dumps(report)
 
 
