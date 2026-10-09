@@ -7,6 +7,7 @@ algorithmic protocol, not physical ultrasound-system validation.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from statistics import NormalDist
 from typing import Sequence
 
 import numpy as np
@@ -22,10 +23,7 @@ from src.validation.synthetic_drift_scenarios import (
 
 def _wilson_interval(successes: int, trials: int, confidence_level: float) -> tuple[float, float]:
     """Wilson score interval for a binomial proportion without SciPy."""
-    # Standard-normal quantiles for common confidence levels; use a conservative
-    # 1.96 fallback for other levels rather than pretending exact quantiles.
-    z_by_confidence = {0.90: 1.6448536269514722, 0.95: 1.959963984540054, 0.99: 2.5758293035489004}
-    z = z_by_confidence.get(round(float(confidence_level), 2), 1.959963984540054)
+    z = NormalDist().inv_cdf((1.0 + float(confidence_level)) / 2.0)
     p = successes / trials
     denominator = 1.0 + z * z / trials
     center = (p + z * z / (2.0 * trials)) / denominator
@@ -185,7 +183,7 @@ def calibrate_drift_thresholds(
         best_rate = min(score.false_alarm_sequence_rate for score in scores)
         raise ValueError(
             "No candidate meets target_false_alarm_rate; "
-            f"lowest observed calibration rate was {best_rate:.6g}. Expand the "
+            f"lowest observed calibration rate was {best_rate:.6g}; no confidence upper bound met the target. Expand the "
             "pre-specified candidate grid or revise the target before evaluation."
         )
     selected = min(
