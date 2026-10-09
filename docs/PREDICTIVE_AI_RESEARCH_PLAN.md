@@ -153,3 +153,12 @@ or validate a scanner physically.
 Use `compare_baseline_forecasters(...)` to evaluate these methods through the same expanding-window rolling-origin harness. Each method is scored on the same target indices and reports MAE, RMSE, MASE when defined, and relative MAE to persistence. Hyperparameters are fixed inputs; the helper does not tune them or automatically choose a winner. If tuning is later added, it must happen inside training-only temporal validation, leaving the final test period untouched.
 
 These methods are deliberately transparent baselines. They should first be exercised on a controlled synthetic sequence with known behaviour, then on traceable ordered acquisitions from a single comparable domain. Do not use unordered BUSI or USSimAndSegm images as if they were a physical scanner time series. A synthetic linear-trend success checks implementation behaviour only; it does not validate scanner prediction.
+
+
+## Multi-series benchmark reporting
+
+`src/prediction/benchmark_report.py` aggregates per-model rolling-origin results across named, ordered feature series. Supply a mapping from series name to the per-model evaluations returned by `compare_baseline_forecasters(...)`.
+
+Within each series, the report checks that candidate models share the same target indices, actual values, horizon, step and persistence predictions. It then reports per-series MAE/RMSE/MASE, relative MAE to persistence where the persistence error is non-zero, and wins/ties/losses against persistence. The primary cross-series summary is the macro mean of per-series relative MAE, so a high-magnitude feature does not dominate simply because of its units. Raw MAE/RMSE summaries are descriptive and should not be used to rank models across differently scaled features.
+
+This helper does not validate provenance, infer acquisition order, or split sessions/devices. The caller must provide independent, comparable ordered sequences and avoid leakage from related acquisitions. Report the number of series and per-series results alongside any aggregate; a macro score from a small or homogeneous set is not evidence of generalization. A zero-error persistence baseline has no defined relative-error ratio and is counted as a tie when the candidate is equally accurate.
