@@ -1,7 +1,7 @@
 # Phase 1 — Initial repository audit
 
 **Status:** static source/documentation audit; not a complete execution audit.  
-**Scope:** inspected the main branch after PR #16. Tests, CI workflows and the full runtime pipeline have not been executed as part of this document.
+**Scope:** static inspection of selected source files and documentation. GitHub Actions unit/integration tests and the final engineering V&V workflow succeeded on the PR #17 audit commit (`1724396219e4d3324fb73680f45a527d1f26bfac`). The new feature-contract regression tests in the current follow-up change must still pass CI. This is not a complete line-by-line or physical-device validation.
 
 ## 1. Scientific evidence levels
 
@@ -20,7 +20,7 @@ A code path or passing unit test must not be described as experimental validatio
 | Component | Observed responsibility | Current evidence visible from source | Main gap / next action |
 |---|---|---|---|
 | `src/acquisition/loader.py` | Loads grayscale images, resizes them and supports experimental/public/demo sources. | Source-aware loading and explicit synthetic demo phantom are implemented. | Audit metadata completeness, original-image preservation, resize policy and source counts on the actual available files. |
-| `src/image_analysis/digital_signature.py` | Defines the versioned Digital Signature and canonical feature order. | `SIGNATURE_VERSION = 2.1`; `FEATURE_ORDER` currently lists 23 entries, including image and physics-derived fields. | Reconcile the feature contract with documentation that describes 11 historical features or a 13-feature signature. Establish one authoritative schema and test its version/hash. |
+| `src/image_analysis/digital_signature.py` | Defines the versioned Digital Signature and canonical feature order. | `SIGNATURE_VERSION = 2.1`; `FEATURE_ORDER` currently lists 23 entries, including image and physics-derived fields. | Document the distinct roles: the canonical `DigitalSignature` vector has 23 features; `StatisticalBaseline.DEFAULT_FEATURES` is a 13-feature subset; the project's 11-feature list is historical. Keep these counts labelled by role/version and test vector order and subset compatibility. |
 | `src/image_analysis/edge_quality.py` | Computes fixed Canny, median-adaptive Canny and gradient-percentile edge-density candidates. | Three definitions are implemented; PR #16 adds a digital-perturbation sensitivity audit. | Report sensitivity by transformation and image family; do not call one definition universally superior without evidence. |
 | `src/validation/repeatability.py` | Repeats synthetic Gaussian-noise perturbations and summarizes feature variability. | Implementation is explicitly simulation-based. | Keep it labelled as a simulated noise/sensitivity estimate; never treat it as physical scanner repeatability. |
 | `src/validation/experimental_repeatability.py` | Summarizes feature variability in supplied observed acquisitions and optionally by session. | Descriptive statistics and input checks are implemented. | Validate metadata/protocol quality and test with traceable real repeated acquisitions before making device-specific claims. |
@@ -35,7 +35,7 @@ A code path or passing unit test must not be described as experimental validatio
 
 ### P0 — Resolve before claiming a stable scientific pipeline
 
-1. **Feature-schema inconsistency:** `digital_signature.py` lists 23 canonical feature names, while other project documents refer to 11 historical features or a 13-feature signature. Determine the actual vector contract and update documentation/tests together.
+1. **Feature-schema clarity:** `digital_signature.py` defines 23 canonical features, while `src/signature/baseline.py` defines a 13-feature default subset and the project plan lists 11 historical features. These counts serve different roles and must not be presented as interchangeable. A regression test now checks canonical vector order and compatibility of the 13-feature subset.
 2. **Evidence-source separation:** every output and metric must retain `public`, `simulated` or `experimental` provenance. Do not aggregate them into a single unlabeled score.
 3. **Lineage-aware splits:** parent images and their digitally transformed derivatives must remain in the same partition. Session- or sequence-related observations must not leak across temporal train/calibration/test boundaries.
 4. **State policy:** retain the conservative rule that AI/fusion evidence alone cannot establish `HIGH_DEVIATION`. The rationale and contributing evidence must be inspectable.
@@ -58,7 +58,7 @@ A code path or passing unit test must not be described as experimental validatio
 
 | Project phase | Initial audit assessment | Exit criterion |
 |---|---|---|
-| Phase 0 — Stabilization | PR #1 is merged in the repository history, but merge status alone does not prove current CI is green. | Inspect the latest CI run; tests, compile check and diff checks pass. |
+| Phase 0 — Stabilization | The configured unit/integration-test and final engineering V&V jobs succeeded on PR #17's audit commit. CI for the new feature-contract regression test is still pending. | Confirm the new test passes in CI; separately verify whether `compileall` and `git diff --check` are required gates, as they are not present in the inspected workflow definitions. |
 | Phase 1 — Repository audit | **Started; not complete.** This document is a static first pass, not a line-by-line audit of every module. | Complete module inventory, run tests/V&V, reconcile claims and publish prioritized issues. |
 | Phase 2 — Data contract and quality | Contract and audit components exist. | Reproducible data-quality report with source counts, duplicates, missing metadata and lineage-leakage checks. |
 | Phase 3 — Features and signal behaviour | Signature, physics and edge-feature modules exist; PR #16 adds one robustness analysis. | Versioned feature catalogue and controlled sensitivity/redundancy report. |
@@ -67,8 +67,8 @@ A code path or passing unit test must not be described as experimental validatio
 
 ## 5. Recommended next actions
 
-1. Run the current CI and V&V commands; record actual results rather than assuming success from merged PRs.
-2. Reconcile the Digital Signature feature schema (23 vs 13 vs 11) and add a test that the documented schema matches the produced vector.
+1. Verify CI for the new feature-contract regression test.
+2. Keep the 23-feature canonical signature, 13-feature default baseline subset and 11 historical features clearly distinguished in docs and tests.
 3. Finish the module-by-module audit, including AI, drift, prediction, explainability, metadata/provenance, tests and workflows.
 4. Generate a source-aware data inventory and verify lineage-safe partitions.
 5. Only then run or extend the predictive benchmark using ordered sequences and fixed baseline comparisons.
