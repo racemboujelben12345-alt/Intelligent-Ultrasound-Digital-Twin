@@ -23,6 +23,12 @@ def test_calibration_uses_nominal_data_and_evaluates_disjoint_seeds():
     assert set(calibration.calibration_seed_ids) == {1, 2, 3, 4, 5, 6}
     assert calibration.selected_ewma_threshold > 0
     assert calibration.selected_cusum_threshold > 0
+    assert all(0.0 <= score.false_alarm_rate_lower <= score.false_alarm_rate_upper <= 1.0
+               for score in calibration.candidate_scores)
+    assert all(score.false_alarm_rate_upper <= calibration.target_false_alarm_rate
+               for score in calibration.candidate_scores
+               if (score.ewma_threshold, score.cusum_threshold) ==
+               (calibration.selected_ewma_threshold, calibration.selected_cusum_threshold))
     assert calibration.to_dict()["candidate_scores"]
 
     evaluation_scenarios = [
@@ -84,6 +90,7 @@ def test_evaluation_rejects_seed_overlap():
         {"target_false_alarm_rate": 1.1},
         {"ewma_alpha": 0.0},
         {"cusum_allowance": -0.1},
+        {"confidence_level": 1.0},
     ],
 )
 def test_calibration_rejects_invalid_parameters(kwargs):
