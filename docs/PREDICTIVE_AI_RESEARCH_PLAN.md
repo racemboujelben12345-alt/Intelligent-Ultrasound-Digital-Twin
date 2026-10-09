@@ -288,3 +288,10 @@ dependence between sequences, distribution shift, or selection effects from
 trying many configurations. Keep thresholds frozen and evaluation seeds
 disjoint from calibration. This remains software-level synthetic validation,
 not physical ultrasound-system validation.
+
+
+## PR #14 — Trial-level bootstrap uncertainty
+
+The helper in `src/validation/bootstrap_drift_uncertainty.py` reports a mean and a reproducible percentile-bootstrap interval from trial-level values. It can summarize a pre-specified metric such as detection delay among detected trials or false-alarm fraction across independently generated synthetic trials.
+
+Use the **trial** as the resampling unit; never bootstrap individual time points as if they were independent. A confidence interval for delay among detected trials is conditional on detection and must be reported alongside the detection rate. Small trial counts, dependence, scenario-design bias, parameter selection, and domain shift can make the interval misleading. These intervals are not physical ultrasound validation, calibrated prediction intervals, or evidence of hardware-failure prediction.
