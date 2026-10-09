@@ -295,3 +295,10 @@ not physical ultrasound-system validation.
 The helper in `src/validation/bootstrap_drift_uncertainty.py` reports a mean and a reproducible percentile-bootstrap interval from trial-level values. It can summarize a pre-specified metric such as detection delay among detected trials or false-alarm fraction across independently generated synthetic trials.
 
 Use the **trial** as the resampling unit; never bootstrap individual time points as if they were independent. A confidence interval for delay among detected trials is conditional on detection and must be reported alongside the detection rate. Small trial counts, dependence, scenario-design bias, parameter selection, and domain shift can make the interval misleading. These intervals are not physical ultrasound validation, calibrated prediction intervals, or evidence of hardware-failure prediction.
+
+
+## PR #15 — Stratified drift sensitivity analysis
+
+`src/validation/drift_sensitivity_analysis.py` reports results separately by scenario family, observation-noise level, and drift magnitude while holding monitor settings fixed. Each cell reports the number of trials, detection rate, mean false-alarm observation fraction, and mean detection delay among detected change trials. This prevents a single pooled average from concealing performance differences across tested synthetic conditions.
+
+Interpret delay only together with detection rate because it is conditional on detection. Nominal/noisy-nominal cases have no mean-change event, so their detection rate is not a measure of successful change detection. These results are synthetic algorithmic stress tests, not physical ultrasound validation, clinical evidence, or hardware-failure prediction. Thresholds must not be tuned on the same outcomes used to report final performance.
