@@ -258,3 +258,19 @@ under temporal dependence or domain shift. If no candidate qualifies, collect
 more independent nominal sequences or revise the operating target and candidate
 grid before inspecting the independent evaluation results. Do not tune against
 the evaluation set.
+
+
+### Nominal calibration sample-size planning
+
+The helper `required_nominal_sequences` computes the smallest planned count of
+independent nominal sequences for which a Wilson upper confidence bound on the
+sequence-level false-alarm probability meets a specified target, conditional on
+a user-supplied assumed number of false-alarm sequences. For example, with a
+5% target, 95% confidence, and an assumption of zero false-alarm sequences, the
+planning result is 73 independent nominal sequences. This is a mathematical
+planning result, not a measured false-alarm rate or a guarantee of future
+performance. Repeated observations from one acquisition/session should not be
+counted as independent sequences without justification. Select the target,
+confidence level, and assumptions before evaluation; retain a separate
+independent evaluation set. Synthetic planning does not validate ultrasound
+hardware or physical acquisition behaviour.
