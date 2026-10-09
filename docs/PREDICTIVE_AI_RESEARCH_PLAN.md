@@ -274,3 +274,17 @@ counted as independent sequences without justification. Select the target,
 confidence level, and assumptions before evaluation; retain a separate
 independent evaluation set. Synthetic planning does not validate ultrasound
 hardware or physical acquisition behaviour.
+
+
+### Confidence intervals on independent drift evaluation
+
+Independent-seed evaluation now reports Wilson confidence intervals for the
+sequence-level false-alarm rate on nominal evaluation scenarios and the
+detection rate on change scenarios, using the confidence level frozen during
+calibration. If a group is absent, its rate and interval are reported as
+`null`, not as zero. These intervals describe binomial uncertainty across the
+supplied synthetic scenarios; they do not correct for scenario-design bias,
+dependence between sequences, distribution shift, or selection effects from
+trying many configurations. Keep thresholds frozen and evaluation seeds
+disjoint from calibration. This remains software-level synthetic validation,
+not physical ultrasound-system validation.
