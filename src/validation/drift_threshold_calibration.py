@@ -53,6 +53,7 @@ class DriftThresholdCalibration:
     ewma_alpha: float
     cusum_allowance: float
     target_false_alarm_rate: float
+    confidence_level: float
     selected_ewma_threshold: float
     selected_cusum_threshold: float
     calibration_seed_ids: tuple[int, ...]
@@ -67,6 +68,7 @@ class DriftThresholdCalibration:
             "ewma_alpha": self.ewma_alpha,
             "cusum_allowance": self.cusum_allowance,
             "target_false_alarm_rate": self.target_false_alarm_rate,
+            "confidence_level": self.confidence_level,
             "selected_ewma_threshold": self.selected_ewma_threshold,
             "selected_cusum_threshold": self.selected_cusum_threshold,
             "calibration_seed_ids": list(self.calibration_seed_ids),
@@ -81,7 +83,12 @@ class CalibratedDriftEvaluation:
 
     trial_metrics: tuple[DriftDetectionMetrics, ...]
     nominal_sequence_false_alarm_rate: float | None
+    nominal_false_alarm_rate_lower: float | None
+    nominal_false_alarm_rate_upper: float | None
     change_detection_rate: float | None
+    change_detection_rate_lower: float | None
+    change_detection_rate_upper: float | None
+    confidence_level: float
     mean_false_alarm_observation_fraction: float
     mean_detection_delay: float | None
     calibration_seed_ids: tuple[int, ...]
@@ -97,7 +104,12 @@ class CalibratedDriftEvaluation:
         return {
             "trial_metrics": [metric.to_dict() for metric in self.trial_metrics],
             "nominal_sequence_false_alarm_rate": self.nominal_sequence_false_alarm_rate,
+            "nominal_false_alarm_rate_lower": self.nominal_false_alarm_rate_lower,
+            "nominal_false_alarm_rate_upper": self.nominal_false_alarm_rate_upper,
             "change_detection_rate": self.change_detection_rate,
+            "change_detection_rate_lower": self.change_detection_rate_lower,
+            "change_detection_rate_upper": self.change_detection_rate_upper,
+            "confidence_level": self.confidence_level,
             "mean_false_alarm_observation_fraction": self.mean_false_alarm_observation_fraction,
             "mean_detection_delay": self.mean_detection_delay,
             "calibration_seed_ids": list(self.calibration_seed_ids),
@@ -198,6 +210,7 @@ def calibrate_drift_thresholds(
         ewma_alpha=float(ewma_alpha),
         cusum_allowance=float(cusum_allowance),
         target_false_alarm_rate=float(target_false_alarm_rate),
+        confidence_level=float(confidence_level),
         selected_ewma_threshold=selected.ewma_threshold,
         selected_cusum_threshold=selected.cusum_threshold,
         calibration_seed_ids=seeds,
@@ -234,14 +247,29 @@ def evaluate_calibrated_thresholds(
     nominal = [metric for metric in metrics if metric.change_index is None]
     changed = [metric for metric in metrics if metric.change_index is not None]
     delays = [metric.detection_delay for metric in changed if metric.detection_delay is not None]
+    nominal_alarmed = sum(metric.alarm_count > 0 for metric in nominal)
+    changed_detected = sum(metric.detected for metric in changed)
+    nominal_interval = (
+        _wilson_interval(nominal_alarmed, len(nominal), calibration.confidence_level)
+        if nominal else (None, None)
+    )
+    detection_interval = (
+        _wilson_interval(changed_detected, len(changed), calibration.confidence_level)
+        if changed else (None, None)
+    )
     return CalibratedDriftEvaluation(
         trial_metrics=tuple(metrics),
         nominal_sequence_false_alarm_rate=(
-            float(np.mean([metric.alarm_count > 0 for metric in nominal])) if nominal else None
+            float(nominal_alarmed / len(nominal)) if nominal else None
         ),
+        nominal_false_alarm_rate_lower=nominal_interval[0],
+        nominal_false_alarm_rate_upper=nominal_interval[1],
         change_detection_rate=(
-            float(np.mean([metric.detected for metric in changed])) if changed else None
+            float(changed_detected / len(changed)) if changed else None
         ),
+        change_detection_rate_lower=detection_interval[0],
+        change_detection_rate_upper=detection_interval[1],
+        confidence_level=calibration.confidence_level,
         mean_false_alarm_observation_fraction=float(
             np.mean([metric.false_alarm_fraction for metric in metrics])
         ),
