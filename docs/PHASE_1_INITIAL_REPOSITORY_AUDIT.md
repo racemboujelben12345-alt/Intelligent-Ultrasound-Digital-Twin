@@ -1,7 +1,7 @@
 # Phase 1 — Initial repository audit
 
 **Status:** static source/documentation audit; not a complete execution audit.  
-**Scope:** static inspection of selected source files and documentation. GitHub Actions unit/integration tests and the final engineering V&V workflow succeeded on the PR #17 audit commit (`1724396219e4d3324fb73680f45a527d1f26bfac`). The new feature-contract regression tests in the current follow-up change must still pass CI. This is not a complete line-by-line or physical-device validation.
+**Scope:** static inspection of selected source files and documentation. GitHub Actions unit/integration tests and the final engineering V&V workflow succeeded on the PR #17 audit commit (`1724396219e4d3324fb73680f45a527d1f26bfac`) and on the PR #18 feature-contract test commit (`1d34b4ed1eca09d41fd2a3e0f770e6af1c0f1252`). PR #18 is merged. This is not a complete line-by-line or physical-device validation.
 
 ## 1. Scientific evidence levels
 
@@ -25,7 +25,7 @@ A code path or passing unit test must not be described as experimental validatio
 | `src/validation/repeatability.py` | Repeats synthetic Gaussian-noise perturbations and summarizes feature variability. | Implementation is explicitly simulation-based. | Keep it labelled as a simulated noise/sensitivity estimate; never treat it as physical scanner repeatability. |
 | `src/validation/experimental_repeatability.py` | Summarizes feature variability in supplied observed acquisitions and optionally by session. | Descriptive statistics and input checks are implemented. | Validate metadata/protocol quality and test with traceable real repeated acquisitions before making device-specific claims. |
 | `src/validation/audit.py` and `scripts/run_vv_audit.py` | Check acquisition contracts, IDs, simulation lineage, reproducibility and degradation response. | A reproducible software/data-contract audit path exists. | Inspect all checks and run it against a documented dataset; a PASS remains software/simulation evidence, not proof of physical validity. |
-| `src/ai/fusion.py` | Combines statistical, AI, quality and physical evidence with fixed weights. | Formula and thresholds are explicit; scores are documented as evidence, not probabilities. | Treat weights/thresholds as provisional until calibrated on representative independent data; test disagreement and edge cases. |
+| `src/ai/fusion.py` | Combines statistical, AI, quality and physical evidence with fixed weights. | Formula and thresholds are explicit; outputs are documented as evidence, not probabilities. | Treat weights/thresholds as provisional until calibrated on representative independent data; test disagreement and edge cases. |
 | `src/digital_twin/state_engine.py` | Maps statistical, fusion, health and temporal drift evidence to one canonical state. | Deterministic states and validation are implemented. AI/fusion high evidence alone maps at most to `EARLY_DRIFT`, not `HIGH_DEVIATION`. | Add/verify transition, persistence, missing-evidence and hysteresis tests against the project’s state policy. |
 | `src/prediction/` and AI model modules | Forecasting and AI components are documented as existing project capabilities. | Documentation describes baselines, a Random Forest ensemble and empirical P05/P95 ensemble spread. | Inventory exact entry points and confirm actual target construction, temporal splits, baseline comparison, leakage controls and interval coverage. Ensemble spread is not automatically a calibrated prediction interval. |
 | `dashboard/app.py` | Streamlit presentation layer reads artifacts from `outputs/`. | Dashboard loads summary/state/feature artifacts and reports when pipeline artifacts are absent. | Trace every displayed value to its source artifact; label demo/simulated data and prevent illustrative values from appearing as measured results. |
@@ -54,18 +54,41 @@ A code path or passing unit test must not be described as experimental validatio
 11. Estimate within-session and between-session variability separately from digitally simulated noise.
 12. Do not deliberately degrade clinical equipment. Any physical variation must be approved, safe and documented.
 
-## 4. Phase alignment
+## 4. Focused AI, drift and state-engine review (static)
+
+The following findings come from source inspection, not from a completed benchmark:
+
+- **Unsupervised anomaly assessment:** `UltrasoundAIEngine.fit_reference()` fits an ensemble of Isolation Forest models and computes an empirical rank against reference anomaly scores. The score is a relative anomaly-evidence percentile for that reference set, not a calibrated probability of failure.
+- **Vote rate and confidence:** the anomaly vote fraction and ensemble agreement describe model votes. The backward-compatible `anomaly_probability` property explicitly returns the vote fraction; downstream UI must not label it as a calibrated probability. The confidence formula is a heuristic, not validated calibration.
+- **Supervised classifier:** `fit_supervised()` uses a Random Forest classifier and `predict_class()` exposes `predict_proba`. These outputs are model scores unless probability calibration and held-out reliability are demonstrated.
+- **Predictive regression:** `fit_predictive_ensemble()` fits Random Forest regressors on the same supplied history. `predict_with_uncertainty()` uses the 5th and 95th percentiles of the ensemble member predictions and defines confidence as (1/(1+spread)). This is an ensemble-spread interval and a scale-dependent heuristic, not calibrated predictive coverage or a probability of correctness.
+- **Explainability:** `anomaly_feature_contributions()` replaces each feature with its reference mean and measures score change. This is a perturbation sensitivity ranking, not causal attribution; correlated features can make the ranking unstable.
+- **Fusion:** fixed weights (35% statistical, 35% AI, 15% image quality and 15% physical evidence) and fixed state thresholds are transparent engineering defaults. The code comments appropriately say they need representative validation before deployment.
+- **State engine:** `src/digital_twin/state_engine.py` makes a deterministic state from statistical, fusion, health and temporal drift evidence. Statistical or health high-deviation evidence can trigger `HIGH_DEVIATION`; fusion high evidence alone leads to `EARLY_DRIFT`. The numeric confidence is an average of heuristic terms, not a calibrated probability.
+- **Temporal drift:** `src/drift/engine.py` applies a configured monitor to the historical Mahalanobis-squared series. Source inspection alone does not establish false-alarm rate, detection delay, or sensitivity on SCAN A.
+
+### Required follow-up tests/evaluation
+
+1. Verify target construction and feature/label alignment for each AI task.
+2. Ensure train/calibration/test partitions are ordered by time where appropriate and grouped by acquisition lineage, parent image, session or sequence to prevent leakage.
+3. Compare predictive models with persistence and other simple baselines at identical forecast origins.
+4. Measure held-out regression errors and prediction-interval coverage/width; do not report ensemble spread as calibrated uncertainty.
+5. Evaluate anomaly thresholds and drift monitors on separate nominal and perturbed datasets; report false alarms and detection delay by scenario.
+6. Test state precedence, contradictory evidence, absent drift data, persistent drift, and boundary values.
+7. Check that dashboard labels distinguish score, vote fraction, heuristic confidence, calibrated probability (if ever validated), and physical evidence.
+
+## 5. Phase alignment
 
 | Project phase | Initial audit assessment | Exit criterion |
 |---|---|---|
-| Phase 0 — Stabilization | The configured unit/integration-test and final engineering V&V jobs succeeded on PR #17's audit commit. CI for the new feature-contract regression test is still pending. | Confirm the new test passes in CI; separately verify whether `compileall` and `git diff --check` are required gates, as they are not present in the inspected workflow definitions. |
-| Phase 1 — Repository audit | **Started; not complete.** This document is a static first pass, not a line-by-line audit of every module. | Complete module inventory, run tests/V&V, reconcile claims and publish prioritized issues. |
+| Phase 0 — Stabilization | The configured unit/integration-test and final engineering V&V jobs succeeded on PR #17 and PR #18 commits; PR #18 is merged. | Confirm repository-wide checks and test coverage are adequate; CI success is software evidence only, not physical validation. |
+| Phase 1 — Repository audit | **In progress.** Feature-contract tests and a focused static AI/drift review are recorded; this is not a complete execution audit of every module. | Complete module inventory, run tests/V&V, reconcile claims and publish prioritized issues. |
 | Phase 2 — Data contract and quality | Contract and audit components exist. | Reproducible data-quality report with source counts, duplicates, missing metadata and lineage-leakage checks. |
 | Phase 3 — Features and signal behaviour | Signature, physics and edge-feature modules exist; PR #16 adds one robustness analysis. | Versioned feature catalogue and controlled sensitivity/redundancy report. |
 | Phase 4 — Predictive benchmark | Forecasting infrastructure is documented and baseline-related PRs exist. | Executed leakage-aware benchmark on valid ordered sequences with a held-out temporal test. |
 | Phases 5–10 | Partial architecture/documentation exists; completion depends on evidence and execution. | Separate acceptance criteria for uncertainty, fusion/state, dashboard, simulations, real acquisitions and final report. |
 
-## 5. Recommended next actions
+## 6. Recommended next actions
 
 1. Verify CI for the new feature-contract regression test.
 2. Keep the 23-feature canonical signature, 13-feature default baseline subset and 11 historical features clearly distinguished in docs and tests.
@@ -75,4 +98,4 @@ A code path or passing unit test must not be described as experimental validatio
 
 ## Evidence boundary
 
-This document is a static inspection of selected source files and documentation. It does **not** claim that tests passed, the complete repository has been audited, the predictive models have been evaluated, or SCAN A has been experimentally validated.
+This document is a static inspection of selected source files and documentation. Configured CI workflows passed on the cited PR #17 and PR #18 commits, but this does **not** mean the complete repository has been audited, predictive performance has been evaluated, model uncertainty is calibrated, or SCAN A has been experimentally validated.
