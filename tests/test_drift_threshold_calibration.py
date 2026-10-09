@@ -39,8 +39,13 @@ def test_calibration_uses_nominal_data_and_evaluates_disjoint_seeds():
         for seed in (101, 102, 103)
     ]
     result = evaluate_calibrated_thresholds(calibration, evaluation_scenarios)
+    assert result.nominal_sequence_false_alarm_rate is None
+    assert result.nominal_false_alarm_rate_lower is None
+    assert result.nominal_false_alarm_rate_upper is None
     assert set(result.evaluation_seed_ids).isdisjoint(result.calibration_seed_ids)
     assert result.change_detection_rate is not None
+    assert result.change_detection_rate_lower <= result.change_detection_rate <= result.change_detection_rate_upper
+    assert result.confidence_level == calibration.confidence_level
     assert result.ewma_threshold == calibration.selected_ewma_threshold
     assert len(result.to_dict()["trial_metrics"]) == 3
 
