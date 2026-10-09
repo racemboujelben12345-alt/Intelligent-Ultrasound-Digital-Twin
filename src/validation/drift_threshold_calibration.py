@@ -18,6 +18,20 @@ from src.validation.synthetic_drift_scenarios import (
 )
 
 
+
+
+def _wilson_interval(successes: int, trials: int, confidence_level: float) -> tuple[float, float]:
+    """Wilson score interval for a binomial proportion without SciPy."""
+    # Standard-normal quantiles for common confidence levels; use a conservative
+    # 1.96 fallback for other levels rather than pretending exact quantiles.
+    z_by_confidence = {0.90: 1.6448536269514722, 0.95: 1.959963984540054, 0.99: 2.5758293035489004}
+    z = z_by_confidence.get(round(float(confidence_level), 2), 1.959963984540054)
+    p = successes / trials
+    denominator = 1.0 + z * z / trials
+    center = (p + z * z / (2.0 * trials)) / denominator
+    half_width = z * np.sqrt((p * (1.0 - p) / trials) + z * z / (4.0 * trials * trials)) / denominator
+    return float(max(0.0, center - half_width)), float(min(1.0, center + half_width))
+
 @dataclass(frozen=True)
 class ThresholdCandidateScore:
     """Nominal-only alarm burden for one fixed threshold pair."""
@@ -27,6 +41,8 @@ class ThresholdCandidateScore:
     false_alarm_sequence_rate: float
     mean_false_alarm_observation_fraction: float
     alarmed_sequences: int
+    false_alarm_rate_lower: float
+    false_alarm_rate_upper: float
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -99,16 +115,21 @@ def calibrate_drift_thresholds(
     candidates: Sequence[tuple[float, float]],
     *,
     target_false_alarm_rate: float = 0.05,
+    confidence_level: float = 0.95,
     ewma_alpha: float = 0.2,
     cusum_allowance: float = 0.5,
 ) -> DriftThresholdCalibration:
     """Select the least conservative supplied threshold pair meeting a nominal FAR.
 
     The false-alarm rate is the fraction of calibration sequences with one or
-    more alarms, not the fraction of individual observations. Candidates are
-    ranked by ascending (EWMA threshold + CUSUM threshold), then by EWMA and
-    CUSUM threshold. At least five nominal scenarios with distinct seeds are
-    required. If no candidate meets the target, calibration fails explicitly.
+    more alarms, not the fraction of individual observations. A Wilson binomial
+    confidence interval is reported for each candidate; selection requires its
+    upper bound to be at or below the target, not merely the point estimate.
+    Candidates are ranked by ascending (EWMA threshold + CUSUM threshold),
+    then by EWMA and CUSUM threshold. At least five nominal scenarios with
+    distinct seeds are required. If no candidate meets the target, calibration
+    fails explicitly. This empirical interval assumes independent Bernoulli
+    sequence outcomes and is not a guarantee under dependence or domain shift.
     """
     scenarios = tuple(nominal_scenarios)
     pairs = tuple((float(e), float(c)) for e, c in candidates)
@@ -123,6 +144,8 @@ def calibrate_drift_thresholds(
         raise ValueError("Candidates must be non-empty and threshold pairs unique.")
     if not np.isfinite(target_false_alarm_rate) or not 0.0 <= target_false_alarm_rate <= 1.0:
         raise ValueError("target_false_alarm_rate must be finite and in [0, 1].")
+    if not np.isfinite(confidence_level) or not 0.0 < confidence_level < 1.0:
+        raise ValueError("confidence_level must be finite and in (0, 1].")
     if not np.isfinite(ewma_alpha) or not 0.0 < ewma_alpha <= 1.0:
         raise ValueError("ewma_alpha must be in (0, 1].")
     if not np.isfinite(cusum_allowance) or cusum_allowance < 0:
@@ -152,10 +175,12 @@ def calibrate_drift_thresholds(
                     np.mean([metric.false_alarm_fraction for metric in metrics])
                 ),
                 alarmed_sequences=int(alarmed),
+                false_alarm_rate_lower=_wilson_interval(alarmed, len(metrics), confidence_level)[0],
+                false_alarm_rate_upper=_wilson_interval(alarmed, len(metrics), confidence_level)[1],
             )
         )
 
-    eligible = [score for score in scores if score.false_alarm_sequence_rate <= target_false_alarm_rate]
+    eligible = [score for score in scores if score.false_alarm_rate_upper <= target_false_alarm_rate]
     if not eligible:
         best_rate = min(score.false_alarm_sequence_rate for score in scores)
         raise ValueError(
