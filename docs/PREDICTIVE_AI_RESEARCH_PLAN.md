@@ -139,3 +139,17 @@ or validate a scanner physically.
 - Does not automatically update the nominal baseline from suspicious data.
 - Does not claim clinical utility, physical fault diagnosis or remaining useful
   life without task-specific validation.
+
+
+## Simple baseline benchmark implementation
+
+`src/prediction/baseline_forecasters.py` exposes four fixed comparison methods:
+
+- **Persistence**: repeat the latest observed value.
+- **Trailing moving average**: repeat the mean of the latest configured window.
+- **Simple exponential smoothing**: update a level with a preselected alpha and repeat it over the forecast horizon.
+- **Linear trend**: fit least-squares linear regression to the observed prefix and extrapolate.
+
+Use `compare_baseline_forecasters(...)` to evaluate these methods through the same expanding-window rolling-origin harness. Each method is scored on the same target indices and reports MAE, RMSE, MASE when defined, and relative MAE to persistence. Hyperparameters are fixed inputs; the helper does not tune them or automatically choose a winner. If tuning is later added, it must happen inside training-only temporal validation, leaving the final test period untouched.
+
+These methods are deliberately transparent baselines. They should first be exercised on a controlled synthetic sequence with known behaviour, then on traceable ordered acquisitions from a single comparable domain. Do not use unordered BUSI or USSimAndSegm images as if they were a physical scanner time series. A synthetic linear-trend success checks implementation behaviour only; it does not validate scanner prediction.
