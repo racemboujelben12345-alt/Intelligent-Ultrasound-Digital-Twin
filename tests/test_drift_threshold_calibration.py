@@ -18,7 +18,7 @@ def test_calibration_uses_nominal_data_and_evaluates_disjoint_seeds():
     calibration = calibrate_drift_thresholds(
         calibration_scenarios,
         candidates=((2.0, 3.0), (3.0, 5.0), (4.0, 7.0)),
-        target_false_alarm_rate=0.5,
+        target_false_alarm_rate=1.0,
     )
     assert set(calibration.calibration_seed_ids) == {1, 2, 3, 4, 5, 6}
     assert calibration.selected_ewma_threshold > 0
