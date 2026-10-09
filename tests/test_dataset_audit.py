@@ -60,7 +60,7 @@ def test_metadata_missingness_and_duplicate_ids_are_reported(tmp_path: Path):
     assert result["rows"] == 2
     assert result["duplicate_acquisition_ids"] == ["a1"]
     assert result["missingness"]["session_id"]["missing_count"] == 1
-    assert "gain" not in result["missingness"]  # not one of the fixed session/context fields
+    assert result["missingness"]["gain"]["missing_count"] == 1
 
 
 def test_report_writes_machine_and_human_readable_outputs(tmp_path: Path):
