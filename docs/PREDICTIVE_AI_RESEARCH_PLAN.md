@@ -216,3 +216,31 @@ scanner electronics, probe wear, or acoustic phantoms. It cannot establish
 physical repeatability, real-world alarm burden, clinical utility, or
 hardware-failure prediction. Keep its results separate from public-image
 experiments and traceable physical acquisitions.
+
+
+## Nominal-only threshold calibration and independent evaluation
+
+`src/validation/drift_threshold_calibration.py` separates threshold selection
+from evaluation:
+
+- `calibrate_drift_thresholds(...)` accepts nominal/no-change calibration
+  sequences only, evaluates a pre-specified list of EWMA/CUSUM threshold pairs,
+  and selects the least conservative supplied pair whose **sequence-level**
+  false-alarm rate is at or below the target. Sequence-level false-alarm rate
+  means the proportion of nominal sequences with at least one alarm; it is not
+  a per-hour or per-acquisition guarantee.
+- At least five calibration sequences with distinct seeds are required. If no
+  candidate meets the target, calibration fails explicitly rather than
+  silently choosing an unsuitable threshold.
+- `evaluate_calibrated_thresholds(...)` freezes the selected parameters and
+  rejects evaluation scenarios whose seeds overlap with calibration seeds.
+  It reports nominal sequence false-alarm rate, change detection rate, mean
+  false-alarm observation fraction, and detection delay among detected changes.
+
+Choose the candidate grid and target before looking at evaluation results. The
+small empirical calibration set does not establish a statistical guarantee of
+future false-alarm rates, particularly under temporal dependence or domain
+shift. This is a synthetic software-validation protocol only; it does not
+validate ultrasound hardware, acoustic physics, clinical utility, or failure
+prediction. For physical claims, repeat the protocol on authorized, traceable
+acquisitions with independent sessions and a pre-registered operating target.
