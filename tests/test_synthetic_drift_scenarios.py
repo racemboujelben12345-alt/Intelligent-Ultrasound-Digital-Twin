@@ -3,7 +3,6 @@ import pytest
 
 from src.prediction.sequential_drift import monitor_sequential_drift
 from src.validation.synthetic_drift_scenarios import (
-    DriftDetectionMetrics,
     evaluate_drift_detection,
     generate_synthetic_drift_scenario,
     run_synthetic_drift_validation,
@@ -35,7 +34,6 @@ def test_supported_scenarios_have_correct_ground_truth(kind, expected_change):
     assert scenario.change_index == expected_change
     assert np.all(np.isfinite(scenario.reference))
     assert np.all(np.isfinite(scenario.observations))
-    assert "synthetic" not in scenario.description.lower() or scenario.name
 
 
 def test_abrupt_shift_is_detected_and_delay_is_non_negative():
